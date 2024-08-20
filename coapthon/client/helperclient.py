@@ -15,13 +15,15 @@
 #
 
 import random
-from multiprocessing import Queue
+# from multiprocessing import Queue
+from queue import Queue	# akr replace with a normal queue
 from queue import Empty
 import threading
 from coapthon.messages.message import Message
 from coapthon import defines
 from coapthon.client.coap import CoAP
 from coapthon.messages.request import Request
+from coapthon.messages.response import Response
 from coapthon.utils import generate_random_token
 
 __author__ = 'Giacomo Tanganelli'
@@ -232,7 +234,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def send_request(self, request, callback=None, timeout=None, no_response=False):  # pragma: no cover
+    def send_request(self, request, callback=None, timeout=None, no_response=False) -> Response:  # pragma: no cover
         """
         Send a request to the remote server.
 

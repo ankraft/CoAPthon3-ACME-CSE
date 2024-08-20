@@ -1,7 +1,21 @@
+#
+#	request.py
+#
+#	This is a patched version of the CoAPthon request.py file.
+#
+#	Original auhtor: Giacomo Tanganelli
+#	Patches by: Andreas Kraft
+#
+
+from __future__ import annotations
 from coapthon import defines
 from coapthon.messages.message import Message
 from coapthon.messages.option import Option
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from coapthon.client.helperclient import HelperClient
+    
 __author__ = 'Giacomo Tanganelli'
 
 
@@ -9,12 +23,16 @@ class Request(Message):
     """
     Class to handle the Requests.
     """
-    def __init__(self):
+    def __init__(self, client:HelperClient = None):
         """
         Initialize a Request message.
 
         """
         super(Request, self).__init__()
+        
+        # akr: fill the destination with the server ip and port as a default
+        if client is not None and hasattr(client.protocol, '_server_ip') and client.protocol._server_ip is not None and client.protocol._server_port is not None:
+            self.destination = (client.protocol._server_ip, client.protocol._server_port)
 
     @property
     def uri_path(self):

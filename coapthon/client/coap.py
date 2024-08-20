@@ -1,3 +1,15 @@
+#
+#	coap.py
+#
+#	This is a patched version of the CoAPthon client/coap.py file.
+#
+#	Original auhtor: Giacomo Tanganelli
+#	Patches by: Andreas Kraft
+#
+#	see https://github.com/Tanganelli/CoAPthon3
+#
+
+
 import logging
 import random
 import socket
@@ -14,6 +26,7 @@ from coapthon.messages.message import Message
 from coapthon.messages.request import Request
 from coapthon.messages.response import Response
 from coapthon.serializer import Serializer
+from coapthon.utils import generate_random_token
 
 
 __author__ = 'Giacomo Tanganelli'
@@ -64,6 +77,10 @@ class CoAP(object):
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self._receiver_thread = None
+        
+        # akr: store the server IP address and port for later default use in client requests
+        self._server_ip = addrinfo[4][0]
+        self._server_port = self._server[1]
 
     def purge_transactions(self, timeout_time=defines.EXCHANGE_LIFETIME):
         """
@@ -110,6 +127,11 @@ class CoAP(object):
         :param message: the message to send
         :param no_response: whether to await a response from the request
         """
+        
+        # akr: add a token if not already present
+        if message.token is None:
+            message.token = generate_random_token(2)
+            
         if isinstance(message, Request):
             request = self._requestLayer.send_request(message)
             request = self._observeLayer.send_request(request)
