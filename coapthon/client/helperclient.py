@@ -1,3 +1,19 @@
+#
+#	helperclient.py
+#
+#	This is a patched version of the CoAPthon client/helperclient.py file.
+#
+#	Original auhtor: Giacomo Tanganelli
+#	Patches by: Andreas Kraft
+#
+#	see https://github.com/Tanganelli/CoAPthon3
+#
+#
+#	Overview about the patches:
+#
+#	- Fixed: when receiving a response, the response is put back into the queue if the response is not for the request (.mid attribute)
+#
+
 import random
 from multiprocessing import Queue
 from queue import Empty
@@ -226,6 +242,7 @@ class HelperClient(object):
         :param no_response: whether to await a response from the request
         :return: the response
         """
+        
         if callback is not None:
             thread = threading.Thread(target=self._thread_body, args=(request, callback))
             thread.start()
@@ -241,6 +258,7 @@ class HelperClient(object):
                             return response
                         if response.type == defines.Types["NON"]:
                             return response
+                        self.queue.put(response)	# akr: put back the response if it is not for the request
                     else:
                         return response
             except Empty:
