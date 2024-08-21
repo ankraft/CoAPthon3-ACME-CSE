@@ -150,10 +150,10 @@ class ForwardLayer(object):
         request.destination = transaction.resource.remote_server
         request.payload = transaction.request.payload
         request.code = transaction.request.code
-        logger.info("forward_request - " + str(request))
+        logger.debug("forward_request - " + str(request))
         response = client.send_request(request)
         client.stop()
-        logger.info("forward_response - " + str(response))
+        logger.debug("forward_response - " + str(response))
         transaction.response.payload = response.payload
         transaction.response.code = response.code
         transaction.response.options = response.options

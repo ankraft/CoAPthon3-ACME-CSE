@@ -150,7 +150,7 @@ class CoAP(object):
                     self.send_datagram(rst)
                     continue
 
-                logger.info("receive_datagram - " + str(message))
+                logger.debug("receive_datagram - " + str(message))
                 if isinstance(message, Request):
                     transaction = self._messageLayer.receive_request(message)
                     if transaction.request.duplicated and transaction.completed:
@@ -185,7 +185,7 @@ class CoAP(object):
         Stop the server.
 
         """
-        logger.info("Stop server")
+        logger.debug("Stop server")
         self.stopped.set()
         for event in self.to_be_stopped:
             event.set()
@@ -242,7 +242,7 @@ class CoAP(object):
         """
         if not self.stopped.isSet():
             host, port = message.destination
-            logger.info("send_datagram - " + str(message))
+            logger.debug("send_datagram - " + str(message))
             serializer = Serializer()
             message = serializer.serialize(message)
             self._socket.sendto(message, (host, port))

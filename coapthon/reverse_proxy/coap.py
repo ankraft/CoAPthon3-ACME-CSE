@@ -214,7 +214,7 @@ class CoAP(object):
             resource.attributes = dict_att
             self.add_resource(base_path + "/" + path, resource)
 
-        logger.info(self.root.dump())
+        logger.debug(self.root.dump())
 
     def purge(self):
         """
@@ -248,7 +248,7 @@ class CoAP(object):
         Stop the server.
 
         """
-        logger.info("Stop server")
+        logger.debug("Stop server")
         self.stopped.set()
         for event in self.to_be_stopped:
             event.set()
@@ -274,7 +274,7 @@ class CoAP(object):
             self.send_datagram(rst)
             return
 
-        logger.info("receive_datagram - " + str(message))
+        logger.debug("receive_datagram - " + str(message))
         if isinstance(message, Request):
 
             transaction = self._messageLayer.receive_request(message)
@@ -355,7 +355,7 @@ class CoAP(object):
         """
         if not self.stopped.isSet():
             host, port = message.destination
-            logger.info("send_datagram - " + str(message))
+            logger.debug("send_datagram - " + str(message))
             serializer = Serializer()
             message = serializer.serialize(message)
 

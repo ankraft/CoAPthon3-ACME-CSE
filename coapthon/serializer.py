@@ -86,7 +86,7 @@ class Serializer(object):
 					# the first 4 bits of the byte represent the option delta
 					# delta = self._reader.read(4).uint
 					num, option_length, pos = Serializer.read_option_value_len_from_byte(next_byte, pos, values)
-					logger.debug("option value (delta): %d len: %d", num, option_length)
+					# logger.debug("option value (delta): %d len: %d", num, option_length)
 					current_option += num
 					# read option
 					try:

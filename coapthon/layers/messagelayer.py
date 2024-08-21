@@ -65,7 +65,7 @@ class MessageLayer(object):
         :rtype : Transaction
         :return: the edited transaction
         """
-        logger.info("receive_request - " + str(request))
+        logger.debug("receive_request - " + str(request))
         try:
             host, port = request.source
         except AttributeError:
@@ -94,7 +94,7 @@ class MessageLayer(object):
         :rtype : Transaction
         :return: the transaction to which the response belongs to
         """
-        logger.info("receive_response - " + str(response))
+        logger.debug("receive_response - " + str(response))
         try:
             host, port = response.source
         except AttributeError:
@@ -141,7 +141,7 @@ class MessageLayer(object):
         :rtype : Transaction
         :return: the transaction to which the message belongs to
         """
-        logger.info("receive_empty - " + str(message))
+        logger.debug("receive_empty - " + str(message))
         try:
             host, port = message.source
         except AttributeError:
@@ -194,7 +194,7 @@ class MessageLayer(object):
         :rtype : Transaction
         :return: the created transaction
         """
-        logger.info("send_request - " + str(request))
+        logger.debug("send_request - " + str(request))
         assert isinstance(request, Request)
         try:
             host, port = request.destination
@@ -226,7 +226,7 @@ class MessageLayer(object):
         :rtype : Transaction
         :return: the edited transaction
         """
-        logger.info("send_response - " + str(transaction.response))
+        logger.debug("send_response - " + str(transaction.response))
         if transaction.response.type is None:
             if transaction.request.type == defines.Types["CON"] and not transaction.request.acknowledged:
                 transaction.response.type = defines.Types["ACK"]
@@ -261,7 +261,7 @@ class MessageLayer(object):
         :type message: Message
         :param message: the ACK or RST message to send
         """
-        logger.info("send_empty - " + str(message))
+        logger.debug("send_empty - " + str(message))
         if transaction is None:
             try:
                 host, port = message.destination

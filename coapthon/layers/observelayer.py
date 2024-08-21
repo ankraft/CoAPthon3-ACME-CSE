@@ -101,7 +101,7 @@ class ObserveLayer(object):
         elif transaction.request.observe == 1:
             host, port = transaction.request.source
             key_token = utils.str_append_hash(host, port, transaction.request.token)
-            logger.info("Remove Subscriber")
+            logger.debug("Remove Subscriber")
             try:
                 del self._relations[key_token]
             except KeyError:
@@ -123,7 +123,7 @@ class ObserveLayer(object):
         if empty.type == defines.Types["RST"]:
             host, port = transaction.request.source
             key_token = utils.str_append_hash(host, port, transaction.request.token)
-            logger.info("Remove Subscriber")
+            logger.debug("Remove Subscriber")
             try:
                 del self._relations[key_token]
             except KeyError:
@@ -190,7 +190,7 @@ class ObserveLayer(object):
 
         :param message: the message
         """
-        logger.info("Remove Subcriber")
+        logger.debug("Remove Subcriber")
         host, port = message.destination
         key_token = utils.str_append_hash(host, port, message.token)
         try:

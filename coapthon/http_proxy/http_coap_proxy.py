@@ -49,7 +49,7 @@ class HCProxy:
         """
         server_address = (self.ip, self.hc_port)
         hc_proxy = HTTPServer(server_address, HCProxyHandler)
-        logger.info('Starting HTTP-CoAP Proxy...')
+        logger.debug('Starting HTTP-CoAP Proxy...')
         hc_proxy.serve_forever()  # the server listen to http://ip:hc_port/path
 
     @staticmethod
@@ -129,7 +129,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         self.do_initial_operations()
         coap_response = self.client.get(self.coap_uri.path)
         self.client.stop()
-        logger.info("Server response: %s", coap_response.pretty_print())
+        logger.debug("Server response: %s", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_HEAD(self):
@@ -142,7 +142,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         # with send_body=False we say that we do not need the body, because it is a HEAD request
         coap_response = self.client.get(self.coap_uri.path)
         self.client.stop()
-        logger.info("Server response: %s", coap_response.pretty_print())
+        logger.debug("Server response: %s", coap_response.pretty_print())
         self.set_http_header(coap_response)
 
     def do_POST(self):
@@ -159,7 +159,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
             return
         coap_response = self.client.post(self.coap_uri.path, payload)
         self.client.stop()
-        logger.info("Server response: %s", coap_response.pretty_print())
+        logger.debug("Server response: %s", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_PUT(self):
@@ -175,7 +175,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         logger.debug(payload)
         coap_response = self.client.put(self.coap_uri.path, payload)
         self.client.stop()
-        logger.info("Server response: %s", coap_response.pretty_print())
+        logger.debug("Server response: %s", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_DELETE(self):
@@ -185,7 +185,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         self.do_initial_operations()
         coap_response = self.client.delete(self.coap_uri.path)
         self.client.stop()
-        logger.info("Server response: %s", coap_response.pretty_print())
+        logger.debug("Server response: %s", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_CONNECT(self):
