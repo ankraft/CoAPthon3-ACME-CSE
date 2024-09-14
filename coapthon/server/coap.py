@@ -220,15 +220,14 @@ class CoAP(object):
                 self.notify(transaction.resource)
                 transaction.resource.deleted = False
 
-            self._observeLayer.send_response(transaction)
-
-            self._blockLayer.send_response(transaction)
+            if transaction.response is not None:
+                self._observeLayer.send_response(transaction)
+                self._blockLayer.send_response(transaction)
 
             self._stop_separate_timer(transaction.separate_timer)
 
-            self._messageLayer.send_response(transaction)
-
             if transaction.response is not None:
+                self._messageLayer.send_response(transaction)
                 if transaction.response.type == defines.Types["CON"]:
                     self._start_retransmission(transaction, transaction.response)
                 self.send_datagram(transaction.response)
