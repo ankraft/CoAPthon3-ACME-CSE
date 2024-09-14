@@ -3,7 +3,7 @@ import datetime
 
 setup(
     name='CoAPthon3-ACME-CSE',
-    version='1.1.0',
+    version='1.1.1',
     packages=[
         'coapthon',
         'coapthon.caching',
