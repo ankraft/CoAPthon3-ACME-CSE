@@ -3,7 +3,7 @@ import datetime
 
 setup(
     name='CoAPthon3-ACME-CSE',
-    version='1.1.1',
+    version='1.1.2',
     packages=[
         'coapthon',
         'coapthon.caching',
@@ -19,7 +19,7 @@ setup(
     author='Giacomo Tanganelli',
     author_email='giacomo.tanganelli@for.unipi.it',
     maintainer="Andreas Kraft",
-    maintainer_email="eis@zan.kraft@gmail.com",
+    maintainer_email="an.kraft@gmail.com",
     url="https://github.com/ankraft/CoAPthon3-ACME-CSE",
     description='CoAPthon is a python library for the CoAP protocol. This fork of the library provides several updates to support the CoAP binding of the ACME oneM2M CSE',
     scripts=[
