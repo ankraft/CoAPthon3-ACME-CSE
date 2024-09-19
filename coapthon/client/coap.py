@@ -138,6 +138,13 @@ class CoAP(object):
             request = self._blockLayer.send_request(request)
             if no_response:
                 # don't add the send message to the message layer transactions
+				
+				# akr: but still add a mid
+                if request.mid is None:
+                    request.mid = self._messageLayer.fetch_mid()
+                # akr: and mark it as non-confirmable
+                request.type = defines.Types["NON"]
+
                 self.send_datagram(request)
                 return
             transaction = self._messageLayer.send_request(request)
