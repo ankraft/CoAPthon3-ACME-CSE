@@ -15,6 +15,8 @@
 #	- Changed some code to use match-case statements
 #
 
+from __future__ import annotations
+from typing import Tuple, Optional, cast, Union
 
 import logging
 import struct
@@ -36,7 +38,7 @@ class Serializer(object):
 	Serializer class to serialize and deserialize CoAP message to/from udp streams.
 	"""
 	@staticmethod
-	def deserialize(datagram, source):
+	def deserialize(datagram:bytes, source:defines.ServerT) -> Message:
 		"""
 		De-serialize a stream of byte to a message.
 
@@ -49,13 +51,17 @@ class Serializer(object):
 			fmt = "!BBH"
 			pos = struct.calcsize(fmt)
 			s = struct.Struct(fmt)
-			values = s.unpack_from(datagram)
-			first = values[0]
-			code = values[1]
-			mid = values[2]
+
+			_u = s.unpack_from(datagram)
+			first = _u[0]
+			code = _u[1]
+			mid = _u[2]
+			
 			version = (first & 0xC0) >> 6
 			message_type = (first & 0x30) >> 4
 			token_length = (first & 0x0F)
+			
+			message:Response|Request|Message
 			if Serializer.is_response(code):
 				message = Response()
 				message.code = code
@@ -64,6 +70,7 @@ class Serializer(object):
 				message.code = code
 			else:
 				message = Message()
+
 			message.source = source
 			message.destination = None
 			message.version = version
@@ -73,9 +80,11 @@ class Serializer(object):
 				message.token = datagram[pos:pos+token_length]
 			else:
 				message.token = None
+			payload_type = None
 
 			pos += token_length
 			current_option = 0
+
 			values = datagram[pos:]
 			length_packet = len(values)
 			pos = 0
@@ -89,6 +98,7 @@ class Serializer(object):
 					# logger.debug("option value (delta): %d len: %d", num, option_length)
 					current_option += num
 					# read option
+					value:int|bytes|str = None
 					try:
 						option_item = defines.OptionRegistry.LIST[current_option]
 					except KeyError:
@@ -106,10 +116,9 @@ class Serializer(object):
 							tmp = values[pos: pos + option_length]
 							value = 0
 							for b in tmp:
-								value = (value << 8) | struct.unpack("B", b.to_bytes(1, "big"))[0]
+								value = (value << 8) | struct.unpack("B", b.to_bytes(1, "big"))[0]	# type: ignore[operator]
 						elif option_item.value_type == defines.OPAQUE:
-							tmp = values[pos: pos + option_length]
-							value = tmp
+							value = values[pos: pos + option_length]
 						else:
 							value = values[pos: pos + option_length]
 
@@ -119,7 +128,7 @@ class Serializer(object):
 
 						message.add_option(option)
 						if option.number == defines.OptionRegistry.CONTENT_TYPE.number:
-							message.payload_type = option.value
+							payload_type = option.value
 					finally:
 						pos += option_length
 				else:
@@ -127,9 +136,9 @@ class Serializer(object):
 					if length_packet <= pos:
 						# log.err("Payload Marker with no payload")
 						raise AttributeError("Packet length %s, pos %s" % (length_packet, pos))
-					message.payload = ""
+					message.payload = b""
 					payload = values[pos:]
-					if hasattr(message, 'payload_type') and message.payload_type in [
+					if payload_type is not None and payload_type in [
 						defines.Content_types["application/octet-stream"],
 						defines.Content_types["application/exi"],
 						defines.Content_types["application/cbor"]
@@ -137,7 +146,8 @@ class Serializer(object):
 						message.payload = payload
 					else:
 						try:
-							message.payload = payload.decode("utf-8")
+							# message.payload = payload.decode("utf-8") # TODO: check if this is corrects
+							message.payload = payload
 						except AttributeError:
 							message.payload = payload
 					pos += len(payload)
@@ -152,7 +162,7 @@ class Serializer(object):
 			return defines.Codes.BAD_REQUEST.number
 
 	@staticmethod
-	def serialize(message):
+	def serialize(message:Message) -> bytes:
 		"""
 		Serialize a message to a udp packet
 
@@ -172,7 +182,7 @@ class Serializer(object):
 		tmp <<= 4
 		tmp |= tkl
 
-		values = [tmp, message.code, message.mid]
+		values:list[int|bytes|str] = [tmp, message.code, message.mid]
 
 		if message.token is not None and tkl > 0:
 			fmt += "%ss" % tkl
@@ -219,15 +229,15 @@ class Serializer(object):
 
 				match opt_type:
 					case defines.INTEGER:
-						words = Serializer.int_to_words(option.value, optionlength, 8)
+						words = Serializer.int_to_words(option.value, optionlength, 8) # type: ignore[arg-type]
 						for num in range(0, optionlength):
 							fmt += "B"
 							values.append(words[num])
 					case defines.STRING:
-						fmt += str(len(bytes(option.value, "utf-8"))) + "s"
-						values.append(bytes(option.value, "utf-8"))
+						fmt += str(len(bytes(option.value, "utf-8"))) + "s" # type: ignore[arg-type]
+						values.append(bytes(option.value, "utf-8")) # type: ignore[arg-type]
 					case _:  # OPAQUE
-						for b in option.value:
+						for b in option.value: # type: ignore
 							fmt += "B"
 							values.append(b)
 
@@ -267,11 +277,11 @@ class Serializer(object):
 			logger.debug(values)
 			logging.exception('Failed to pack structure')
 
-		return datagram
+		return cast(bytes, datagram)
 
 
 	@staticmethod
-	def is_request(code):
+	def is_request(code:int) -> bool:
 		"""
 		Checks if is request.
 
@@ -281,7 +291,7 @@ class Serializer(object):
 
 
 	@staticmethod
-	def is_response(code):
+	def is_response(code:int) -> bool:
 		"""
 		Checks if is response.
 
@@ -291,7 +301,7 @@ class Serializer(object):
 
 
 	@staticmethod
-	def read_option_value_len_from_byte(byte, pos, values):
+	def read_option_value_len_from_byte(byte:int, pos:int, values:bytes) -> Tuple[int, int, int]:
 		"""
 		Calculates the value and length used in the extended option fields.
 
@@ -309,7 +319,7 @@ class Serializer(object):
 			pos += 1
 		elif h_nibble == 14:
 			s = struct.Struct("!H")
-			value = s.unpack_from(values[pos:pos+2])[0] + 269
+			value = s.unpack_from(values[pos:pos+2])[0] + 269	# type: ignore
 			pos += 2
 		else:
 			raise AttributeError("Unsupported option number nibble " + str(h_nibble))
@@ -321,7 +331,7 @@ class Serializer(object):
 			pos += 1
 		elif l_nibble == 14:
 			s = struct.Struct("!H")
-			length = s.unpack_from(values[pos:pos+2])[0] + 269
+			length = s.unpack_from(values[pos:pos+2])[0] + 269 # type: ignore
 			pos += 2
 		else:
 			raise AttributeError("Unsupported option length nibble " + str(l_nibble))
@@ -329,7 +339,7 @@ class Serializer(object):
 
 
 	@staticmethod
-	def convert_to_raw(number, value, length):
+	def convert_to_raw(number:int, value:int|bytes|str, length:int) -> bytes|int|str:
 		"""
 		Get the value of an option as bytes.
 
@@ -355,7 +365,8 @@ class Serializer(object):
 			case defines.OPAQUE if isinstance(value, bytes):
 				return value
 			case defines.OPAQUE:
-				return bytes(value, "utf-8")
+				# return bytes(value, "utf-8")
+				return value
 			
 		# fallthroughs !!
 		if isinstance(value, tuple):
@@ -370,7 +381,7 @@ class Serializer(object):
 			return bytes(value)
 
 	@staticmethod
-	def as_sorted_list(options):
+	def as_sorted_list(options:list[Option]) -> list[Option]:
 		"""
 		Returns all options in a list sorted according to their option numbers.
 
@@ -381,7 +392,7 @@ class Serializer(object):
 		return options
 
 	@staticmethod
-	def get_option_nibble(optionvalue):
+	def get_option_nibble(optionvalue:int) -> int:
 		"""
 		Returns the 4-bit option header value.
 
@@ -395,11 +406,11 @@ class Serializer(object):
 		elif optionvalue <= 65535 + 269:
 			return 14
 		else:
-			raise AttributeError("Unsupported option delta " + optionvalue)
+			raise AttributeError(f"Unsupported option delta {optionvalue}")
 
 
 	@staticmethod
-	def int_to_words(int_val, num_words=4, word_size=32):
+	def int_to_words(int_val:int, num_words:Optional[int]=4, word_size:Optional[int]=32) -> list[int]:
 		"""
 		Convert a int value to bytes.
 

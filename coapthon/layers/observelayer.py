@@ -1,8 +1,20 @@
+
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
+
 import logging
 import time
 
 from coapthon import defines
 from coapthon import utils
+
+
+if TYPE_CHECKING:
+	from coapthon.transaction import Transaction
+	from coapthon.resources.resource import Resource
+	from coapthon.messages.message import Message
+	from coapthon.messages.request import Request
+	from coapthon.utils import Tree
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -10,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ObserveItem(object):
-    def __init__(self, timestamp, non_counter, allowed, transaction):
+    def __init__(self, timestamp:float, non_counter:int, allowed:bool, transaction:Transaction) -> None:
         """
         Data structure for the Observe option
 
@@ -29,10 +41,10 @@ class ObserveLayer(object):
     """
     Manage the observing feature. It store observing relationships.
     """
-    def __init__(self):
-        self._relations = {}
+    def __init__(self) -> None:
+        self._relations:dict[int, ObserveItem] = {}
 
-    def send_request(self, request):
+    def send_request(self, request:Request) -> Request:
         """
         Add itself to the observing list
 
@@ -48,7 +60,7 @@ class ObserveLayer(object):
 
         return request
 
-    def receive_response(self, transaction):
+    def receive_response(self, transaction:Transaction) -> Transaction:
         """
         Sets notification's parameters.
 
@@ -63,7 +75,7 @@ class ObserveLayer(object):
             transaction.notification = True
         return transaction
 
-    def send_empty(self, message):
+    def send_empty(self, message:Message) -> Message:
         """
         Eventually remove from the observer list in case of a RST message.
 
@@ -77,7 +89,7 @@ class ObserveLayer(object):
             del self._relations[key_token]
         return message
 
-    def receive_request(self, transaction):
+    def receive_request(self, transaction:Transaction) -> Transaction:
         """
         Manage the observe option in the request end eventually initialize the client for adding to
         the list of observers or remove from the list.
@@ -109,7 +121,7 @@ class ObserveLayer(object):
 
         return transaction
 
-    def receive_empty(self, empty, transaction):
+    def receive_empty(self, empty:Message, transaction:Transaction) -> Transaction:
         """
         Manage the observe feature to remove a client in case of a RST message receveide in reply to a notification.
 
@@ -131,7 +143,7 @@ class ObserveLayer(object):
             transaction.completed = True
         return transaction
 
-    def send_response(self, transaction):
+    def send_response(self, transaction:Transaction) -> Transaction:
         """
         Finalize to add the client to the list of observer.
 
@@ -155,7 +167,7 @@ class ObserveLayer(object):
                 del self._relations[key_token]
         return transaction
 
-    def notify(self, resource, root=None):
+    def notify(self, resource:Resource, root:Optional[Tree]=None) -> list:
         """
         Prepare notification for the resource to all interested observers.
 
@@ -184,7 +196,7 @@ class ObserveLayer(object):
                 ret.append(self._relations[key].transaction)
         return ret
 
-    def remove_subscriber(self, message):
+    def remove_subscriber(self, message:Message) -> None:
         """
         Remove a subscriber based on token.
 

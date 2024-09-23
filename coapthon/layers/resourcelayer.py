@@ -1,6 +1,16 @@
+from __future__ import annotations
+from typing import Callable, Tuple, cast, TYPE_CHECKING
+
 from coapthon import defines
 from coapthon.messages.response import Response
 from coapthon.resources.resource import Resource
+
+if TYPE_CHECKING:
+	from coapthon.transaction import Transaction
+	from coapthon.messages.request import Request
+	from coapthon.server.coap import CoAP
+	from coapthon.forward_proxy.coap import CoAP as ForwardCoAP
+	from coapthon.reverse_proxy.coap import CoAP as ReverseCoAP
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -9,7 +19,7 @@ class ResourceLayer(object):
     """
     Handles the Resources.
     """
-    def __init__(self, parent):
+    def __init__(self, parent:CoAP|ForwardCoAP|ReverseCoAP) -> None:
         """
         Initialize a Resource Layer.
 
@@ -18,7 +28,7 @@ class ResourceLayer(object):
         """
         self._parent = parent
 
-    def edit_resource(self, transaction, path):
+    def edit_resource(self, transaction:Transaction, path:str) -> Transaction:
         """
         Render a POST on an already created resource.
 
@@ -26,7 +36,7 @@ class ResourceLayer(object):
         :param transaction: the transaction
         :return: the transaction
         """
-        resource_node = self._parent.root[path]
+        resource_node = cast(Resource, self._parent.root[path])
         transaction.resource = resource_node
         # If-Match
         if transaction.request.if_match:
@@ -103,7 +113,7 @@ class ResourceLayer(object):
 
         assert(isinstance(resource, Resource))
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
 
         if transaction.response.code == defines.Codes.CREATED.number:
             # Only on CREATED according to RFC 7252 Chapter 5.8.2 POST
@@ -118,7 +128,7 @@ class ResourceLayer(object):
 
         return transaction
 
-    def add_resource(self, transaction, parent_resource, lp):
+    def add_resource(self, transaction:Transaction, parent_resource:Resource, lp:str) -> Transaction:
         """
         Render a POST on a new resource.
 
@@ -185,7 +195,7 @@ class ResourceLayer(object):
         resource.path = lp
 
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
 
         transaction.response.location_path = resource.path
 
@@ -197,7 +207,7 @@ class ResourceLayer(object):
 
         assert (isinstance(resource, Resource))
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
         if resource.max_age is not None:
             transaction.response.max_age = resource.max_age
 
@@ -209,7 +219,7 @@ class ResourceLayer(object):
 
         return transaction
 
-    def create_resource(self, path, transaction):
+    def create_resource(self, path:str, transaction:Transaction) -> Transaction:
         """
         Render a POST request.
 
@@ -229,14 +239,14 @@ class ResourceLayer(object):
                 max_len = len(i)
 
         lp = path
-        parent_resource = self._parent.root[imax]
+        parent_resource = cast(Resource, self._parent.root[imax])
         if parent_resource.allow_children:
             return self.add_resource(transaction, parent_resource, lp)
         else:
             transaction.response.code = defines.Codes.METHOD_NOT_ALLOWED.number
             return transaction
 
-    def update_resource(self, transaction):
+    def update_resource(self, transaction:Transaction) -> Transaction:
         """
         Render a PUT request.
 
@@ -310,7 +320,7 @@ class ResourceLayer(object):
             return transaction
 
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
 
         transaction.response.code = defines.Codes.CHANGED.number
 
@@ -318,7 +328,7 @@ class ResourceLayer(object):
 
         assert (isinstance(resource, Resource))
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
         if resource.max_age is not None:
             transaction.response.max_age = resource.max_age
 
@@ -328,7 +338,7 @@ class ResourceLayer(object):
 
         return transaction
 
-    def _handle_separate(self, transaction, callback):
+    def _handle_separate(self, transaction:Transaction, callback:Callable) -> Resource:
         # Handle separate
         if not transaction.request.acknowledged:
             self._parent._send_ack(transaction)
@@ -336,14 +346,14 @@ class ResourceLayer(object):
         resource = callback(request=transaction.request)
         return resource
 
-    def _handle_separate_advanced(self, transaction, callback):
+    def _handle_separate_advanced(self, transaction:Transaction, callback:Callable) -> Tuple[Request, Response]:
         # Handle separate
         if not transaction.request.acknowledged:
             self._parent._send_ack(transaction)
             transaction.request.acknowledged = True
         return callback(request=transaction.request, response=transaction.response)
 
-    def delete_resource(self, transaction, path):
+    def delete_resource(self, transaction:Transaction, path:str) -> Transaction:
         """
         Render a DELETE request.
 
@@ -415,7 +425,7 @@ class ResourceLayer(object):
 
         return transaction
 
-    def get_resource(self, transaction):
+    def get_resource(self, transaction:Transaction) -> Transaction:
         """
         Render a GET request.
 
@@ -477,7 +487,7 @@ class ResourceLayer(object):
         else:  # pragma: no cover
             # Handle error
             transaction.response.code = defines.Codes.INTERNAL_SERVER_ERROR.number
-            return transaction.response
+            return transaction
 
         if resource.etag in transaction.request.etag:
             transaction.response.code = defines.Codes.VALID.number
@@ -485,17 +495,17 @@ class ResourceLayer(object):
             transaction.response.code = defines.Codes.CONTENT.number
 
         try:
-            transaction.response.payload = resource.payload
+            transaction.response.payload = bytes(cast(str, resource.payload), 'utf-8')
             if resource.actual_content_type is not None \
                     and resource.actual_content_type != defines.Content_types["text/plain"]:
                 transaction.response.content_type = resource.actual_content_type
         except KeyError:
             transaction.response.code = defines.Codes.NOT_ACCEPTABLE.number
-            return transaction.response
+            return transaction
 
-        assert(isinstance(resource, Resource))
+        # assert(isinstance(resource, Resource))
         if resource.etag is not None:
-            transaction.response.etag = resource.etag
+            transaction.response.etag = [resource.etag]
         if resource.max_age is not None:
             transaction.response.max_age = resource.max_age
 
@@ -503,7 +513,7 @@ class ResourceLayer(object):
 
         return transaction
 
-    def discover(self, transaction):
+    def discover(self, transaction:Transaction) -> Transaction:
         """
         Render a GET request to the .well-know/core link.
 
@@ -515,20 +525,19 @@ class ResourceLayer(object):
         for i in self._parent.root.dump():
             if i == "/":
                 continue
-            resource = self._parent.root[i]
+            resource = cast(Resource, self._parent.root[i])
             if resource.visible:
                 ret = self.valid(transaction.request.uri_query, resource.attributes)
                 if ret:
                     payload += self.corelinkformat(resource)
 
-        transaction.response.payload = payload
+        transaction.response.payload = bytes(payload, 'utf-8')
         transaction.response.content_type = defines.Content_types["application/link-format"]
         return transaction
 
     @staticmethod
-    def valid(query, attributes):
-        query = query.split("&")
-        for q in query:
+    def valid(query:str, attributes:dict) -> bool:
+        for q in query.split("&"):
             q = str(q)
             assert(isinstance(q, str))
             tmp = q.split("=")
@@ -545,7 +554,7 @@ class ResourceLayer(object):
         return True
 
     @staticmethod
-    def corelinkformat(resource):
+    def corelinkformat(resource:Resource) -> str:
         """
         Return a formatted string representation of the corelinkformat in the tree.
 

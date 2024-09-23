@@ -14,6 +14,8 @@
 #	- added __repl__ method
 #
 
+from typing import Union
+
 from coapthon import defines
 from coapthon.utils import byte_len
 
@@ -24,15 +26,15 @@ class Option(object):
 	"""
 	Class to handle the CoAP Options.
 	"""
-	def __init__(self):
+	def __init__(self) -> None:
 		"""
 		Data structure to store options.
 		"""
-		self._number = None
-		self._value = None
+		self._number:int = None
+		self._value:Union[str, int, bytes] = None
 
 	@property
-	def number(self):
+	def number(self) -> int:
 		"""
 		Return the number of the option.
 
@@ -41,7 +43,7 @@ class Option(object):
 		return self._number
 
 	@number.setter
-	def number(self, value):
+	def number(self, value:int) -> None:
 		"""
 		Set the option number.
 
@@ -51,7 +53,7 @@ class Option(object):
 		self._number = value
 
 	@property
-	def value(self):
+	def value(self) -> Union[str, int, bytes]:
 		"""
 		Return the option value.
 
@@ -61,14 +63,14 @@ class Option(object):
 			self._value = bytes()
 		opt_type = defines.OptionRegistry.LIST[self._number].value_type
 		if opt_type == defines.INTEGER:
-			if byte_len(self._value) > 0:
+			if byte_len(self._value) > 0:	# type:ignore[arg-type]
 				return int(self._value)
 			else:
 				return defines.OptionRegistry.LIST[self._number].default
 		return self._value
 
 	@value.setter
-	def value(self, value):
+	def value(self, value:Union[str, int, bytes]) -> None:
 		"""
 		Set the value of the option.
 
@@ -88,11 +90,11 @@ class Option(object):
 				pass
 			else:
 				if value is not None:
-					value = bytes(value, "utf-8")
+					value = bytes(value, "utf-8")	# type:ignore[arg-type]
 		self._value = value
 
 	@property
-	def length(self):
+	def length(self) -> int:
 		"""
 		Return the value length
 
@@ -104,25 +106,23 @@ class Option(object):
 			return 0
 		return len(self._value)
 
-	def is_safe(self):
+	def is_safe(self) -> bool:
 		"""
 		Check if the option is safe.
 
 		:rtype : bool
 		:return: True, if option is safe
 		"""
-		if self._number == defines.OptionRegistry.URI_HOST.number \
-				or self._number == defines.OptionRegistry.URI_PORT.number \
-				or self._number == defines.OptionRegistry.URI_PATH.number \
-				or self._number == defines.OptionRegistry.MAX_AGE.number \
-				or self._number == defines.OptionRegistry.URI_QUERY.number \
-				or self._number == defines.OptionRegistry.PROXY_URI.number \
-				or self._number == defines.OptionRegistry.PROXY_SCHEME.number:
-			return False
-		return True
+		return self._number not in (defines.OptionRegistry.URI_HOST.number,
+						  		    defines.OptionRegistry.URI_PORT.number,
+								    defines.OptionRegistry.URI_PATH.number,
+								    defines.OptionRegistry.MAX_AGE.number,
+								    defines.OptionRegistry.URI_QUERY.number,
+								    defines.OptionRegistry.PROXY_URI.number,
+								    defines.OptionRegistry.PROXY_SCHEME.number)
 
 	@property
-	def name(self):
+	def name(self) -> str:
 		"""
 		Return option name.
 
@@ -131,7 +131,7 @@ class Option(object):
 		"""
 		return defines.OptionRegistry.LIST[self._number].name
 
-	def __str__(self):
+	def __str__(self) -> str:
 		"""
 		Return a string representing the option
 
@@ -141,7 +141,7 @@ class Option(object):
 		return self.name + ": " + str(self.value)
 
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		"""
 		Return a string representing the option
 
@@ -151,7 +151,7 @@ class Option(object):
 		return self.__str__()
 
   
-	def __eq__(self, other):
+	def __eq__(self, other:object) -> bool:
 		"""
 		Return True if two option are equal
 

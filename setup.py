@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup # type: ignore
 import datetime
 
 setup(
     name='CoAPthon3-ACME-CSE',
-    version='1.1.2',
+    version='1.1.3',
     packages=[
         'coapthon',
         'coapthon.caching',
@@ -21,7 +21,7 @@ setup(
     maintainer="Andreas Kraft",
     maintainer_email="an.kraft@gmail.com",
     url="https://github.com/ankraft/CoAPthon3-ACME-CSE",
-    description='CoAPthon is a python library for the CoAP protocol. This fork of the library provides several updates to support the CoAP binding of the ACME oneM2M CSE',
+    description='CoAPthon is a python library for the CoAP protocol. This fork of the library provides several updates to support the oneM2M CoAP binding of the ACME oneM2M CSE',
     scripts=[
         'coapclient.py',
         'coapforwardproxy.py',
@@ -29,5 +29,7 @@ setup(
         'coapserver.py',
         'exampleresources.py',
     ],
-    requires=['sphinx', 'cachetools']
+    requires=['sphinx', 'cachetools'],
+    package_data={'coapthon': ['py.typed'] }
+
 )

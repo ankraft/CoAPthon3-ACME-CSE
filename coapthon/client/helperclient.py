@@ -14,10 +14,15 @@
 #	- Fixed: when receiving a response, the response is put back into the queue if the response is not for the request (.mid attribute)
 #
 
+from __future__ import annotations
+from typing import Callable, Any, Optional
+
 import random
 # from multiprocessing import Queue
 from queue import Queue	# akr replace with a normal queue
 from queue import Empty
+
+import socket
 import threading
 from coapthon.messages.message import Message
 from coapthon import defines
@@ -33,7 +38,7 @@ class HelperClient(object):
     """
     Helper Client class to perform requests to remote servers in a simplified way.
     """
-    def __init__(self, server, sock=None, cb_ignore_read_exception=None, cb_ignore_write_exception=None):
+    def __init__(self, server:defines.ServerT, sock:socket.socket=None, cb_ignore_read_exception:Callable=None, cb_ignore_write_exception:Callable=None) -> None:
         """
         Initialize a client to perform request to a server.
 
@@ -45,9 +50,9 @@ class HelperClient(object):
         self.server = server
         self.protocol = CoAP(self.server, random.randint(1, 65535), self._wait_response, sock=sock,
                              cb_ignore_read_exception=cb_ignore_read_exception, cb_ignore_write_exception=cb_ignore_write_exception)
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def _wait_response(self, message):
+    def _wait_response(self, message:Message) -> None:
         """
         Private function to get responses from the server.
 
@@ -56,20 +61,20 @@ class HelperClient(object):
         if message is None or message.code != defines.Codes.CONTINUE.number:
             self.queue.put(message)
 
-    def stop(self):
+    def stop(self) -> None:
         """
         Stop the client.
         """
         self.protocol.close()
         self.queue.put(None)
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the client.
         """
         self.stop()
 
-    def _thread_body(self, request, callback):
+    def _thread_body(self, request:Request, callback:Callable) -> None:
         """
         Private function. Send a request, wait for response and call the callback function.
 
@@ -81,7 +86,7 @@ class HelperClient(object):
             response = self.queue.get(block=True)
             callback(response)
 
-    def cancel_observing(self, response, send_rst):  # pragma: no cover
+    def cancel_observing(self, response:Response, send_rst:bool) -> None:  # pragma: no cover
         """
         Delete observing on the remote server.
 
@@ -99,7 +104,7 @@ class HelperClient(object):
             self.protocol.send_message(message)
         self.stop()
 
-    def get(self, path, callback=None, timeout=None, **kwargs):  # pragma: no cover
+    def get(self, path:str, callback:Optional[Callable]=None, timeout:Optional[int]=None, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a GET on a certain path.
 
@@ -117,7 +122,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def get_non(self, path, callback=None, timeout=None, **kwargs):  # pragma: no cover
+    def get_non(self, path:str, callback:Optional[Callable]=None, timeout:Optional[int]=None, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a GET on a certain path.
 
@@ -135,7 +140,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def observe(self, path, callback, timeout=None, **kwargs):  # pragma: no cover
+    def observe(self, path:str, callback:Callable, timeout:Optional[int]=None, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a GET with observe on a certain path.
 
@@ -153,7 +158,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def delete(self, path, callback=None, timeout=None, **kwargs):  # pragma: no cover
+    def delete(self, path:str, callback:Optional[Callable]=None, timeout:Optional[int]=None, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a DELETE on a certain path.
 
@@ -170,7 +175,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def post(self, path, payload, callback=None, timeout=None, no_response=False, **kwargs):  # pragma: no cover
+    def post(self, path:str, payload:bytes, callback:Optional[Callable]=None, timeout:Optional[int]=None, no_response:Optional[bool]=False, **kwargs:Any) -> Response:  # pragma: no cover
         """
         Perform a POST on a certain path.
 
@@ -194,7 +199,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout, no_response=no_response)
 
-    def put(self, path, payload, callback=None, timeout=None, no_response=False, **kwargs):  # pragma: no cover
+    def put(self, path:str, payload:bytes, callback:Optional[Callable]=None, timeout:Optional[int]=None, no_response:Optional[bool]=False, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a PUT on a certain path.
 
@@ -218,7 +223,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout, no_response=no_response)
 
-    def discover(self, callback=None, timeout=None, **kwargs):  # pragma: no cover
+    def discover(self, callback:Optional[Callable]=None, timeout:Optional[float]=None, **kwargs:Any) -> Optional[Response]:  # pragma: no cover
         """
         Perform a Discover request on the server.
 
@@ -234,7 +239,7 @@ class HelperClient(object):
 
         return self.send_request(request, callback, timeout)
 
-    def send_request(self, request, callback=None, timeout=None, no_response=False) -> Response:  # pragma: no cover
+    def send_request(self, request:Request, callback:Optional[Callable]=None, timeout:Optional[float]=None, no_response:Optional[bool]=False) -> Optional[Response]:  # pragma: no cover
         """
         Send a request to the remote server.
 
@@ -248,10 +253,11 @@ class HelperClient(object):
         if callback is not None:
             thread = threading.Thread(target=self._thread_body, args=(request, callback))
             thread.start()
+            return None
         else:
             self.protocol.send_message(request, no_response=no_response)
             if no_response:
-                return
+                return None
             try:
                 while True:
                     response = self.queue.get(block=True, timeout=timeout)
@@ -268,7 +274,7 @@ class HelperClient(object):
                 response = None
             return response
 
-    def send_empty(self, empty):  # pragma: no cover
+    def send_empty(self, empty:Message) -> None:  # pragma: no cover
         """
         Send empty message.
 
@@ -276,7 +282,7 @@ class HelperClient(object):
         """
         self.protocol.send_message(empty)
 
-    def mk_request(self, method, path):
+    def mk_request(self, method:defines.CodeItem, path:str) -> Request:
         """
         Create a request.
 
@@ -290,7 +296,7 @@ class HelperClient(object):
         request.uri_path = path
         return request
 
-    def mk_request_non(self, method, path):
+    def mk_request_non(self, method:defines.CodeItem, path:str) -> Request:
         """
         Create a request.
 

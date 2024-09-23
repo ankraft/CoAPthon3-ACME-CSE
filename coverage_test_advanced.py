@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Tuple
+
 import threading
 import unittest
 from queue import Queue
@@ -11,25 +14,26 @@ from coapthon.client.helperclient import HelperClient
 from coapthon.messages.option import Option
 from coapthon.messages.request import Request
 from coapthon.messages.response import Response
+from coapthon import defines
 
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
-        self.server_address = ("127.0.0.1", 5683)
-        self.current_mid = random.randint(1, 1000)
-        self.server_mid = random.randint(1000, 2000)
-        self.server = CoAPServer("127.0.0.1", 5683)
-        self.server_thread = threading.Thread(target=self.server.listen, args=(1,))
+    def setUp(self) -> None:
+        self.server_address:defines.ServerT = ("127.0.0.1", 5683)
+        self.current_mid:int = random.randint(1, 1000)
+        self.server_mid:int = random.randint(1000, 2000)
+        self.server:CoAPServer = CoAPServer("127.0.0.1", 5683)
+        self.server_thread:threading.Thread = threading.Thread(target=self.server.listen, args=(1,))
         self.server_thread.start()
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.server.close()
         self.server_thread.join(timeout=25)
         self.server = None
 
-    def _test_with_client(self, message_list):  # pragma: no cover
+    def _test_with_client(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -56,11 +60,11 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def client_callback(self, response):
+    def client_callback(self, response:Response) -> None:
         print("Callback")
         self.queue.put(response)
 
-    def test_advanced(self):
+    def test_advanced(self) -> None:
         print("TEST_ADVANCED")
         path = "/advanced"
 
@@ -92,7 +96,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.CREATED.number
-        expected.payload = "Response changed through POST"
+        expected.payload = b"Response changed through POST"
         expected.token = None
 
         exchange2 = (req, expected)
@@ -109,7 +113,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.CHANGED.number
-        expected.payload = "Response changed through PUT"
+        expected.payload = b"Response changed through PUT"
         expected.token = None
 
         exchange3 = (req, expected)
@@ -126,7 +130,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.DELETED.number
-        expected.payload = "Response deleted"
+        expected.payload = b"Response deleted"
         expected.token = None
 
         exchange4 = (req, expected)
@@ -134,7 +138,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_advanced_separate(self):
+    def test_advanced_separate(self) -> None:
         print("TEST_ADVANCED_SEPARATE")
         path = "/advancedSeparate"
 
@@ -166,7 +170,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["CON"]
         expected._mid = None
         expected.code = defines.Codes.CREATED.number
-        expected.payload = "Response changed through POST"
+        expected.payload = b"Response changed through POST"
         expected.token = None
 
         exchange2 = (req, expected)
@@ -183,7 +187,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["CON"]
         expected._mid = None
         expected.code = defines.Codes.CHANGED.number
-        expected.payload = "Response changed through PUT"
+        expected.payload = b"Response changed through PUT"
         expected.token = None
 
         exchange3 = (req, expected)
@@ -200,7 +204,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["CON"]
         expected._mid = None
         expected.code = defines.Codes.DELETED.number
-        expected.payload = "Response deleted"
+        expected.payload = b"Response deleted"
         expected.token = None
 
         exchange4 = (req, expected)

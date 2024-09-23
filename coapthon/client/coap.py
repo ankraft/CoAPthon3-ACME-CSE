@@ -9,6 +9,8 @@
 #	see https://github.com/Tanganelli/CoAPthon3
 #
 
+from __future__ import annotations
+from typing import Optional, Callable, TYPE_CHECKING
 
 import logging
 import random
@@ -28,6 +30,9 @@ from coapthon.messages.response import Response
 from coapthon.serializer import Serializer
 from coapthon.utils import generate_random_token
 
+if TYPE_CHECKING:
+	from coapthon.transaction import Transaction
+
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -39,7 +44,7 @@ class CoAP(object):
     """
     Client class to perform requests to remote servers.
     """
-    def __init__(self, server, starting_mid, callback, sock=None, cb_ignore_read_exception=None, cb_ignore_write_exception=None):
+    def __init__(self, server:defines.ServerT, starting_mid:int, callback:Callable, sock:Optional[socket.socket]=None, cb_ignore_read_exception:Optional[Callable]=None, cb_ignore_write_exception:Optional[Callable]=None) -> None:
         """
         Initialize the client.
 
@@ -56,7 +61,7 @@ class CoAP(object):
         self._cb_ignore_read_exception = cb_ignore_read_exception
         self._cb_ignore_write_exception = cb_ignore_write_exception
         self.stopped = threading.Event()
-        self.to_be_stopped = []
+        self.to_be_stopped:list[threading.Event] = []
 
         self._messageLayer = MessageLayer(self._currentMID)
         self._blockLayer = BlockLayer()
@@ -76,20 +81,20 @@ class CoAP(object):
             self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        self._receiver_thread = None
+        self._receiver_thread:Optional[threading.Thread] = None
         
         # akr: store the server IP address and port for later default use in client requests
         self._server_ip = addrinfo[4][0]
         self._server_port = self._server[1]
 
-    def purge_transactions(self, timeout_time=defines.EXCHANGE_LIFETIME):
+    def purge_transactions(self, timeout_time:Optional[float]=defines.EXCHANGE_LIFETIME) -> None:
         """
         Clean old transactions
 
         """
         self._messageLayer.purge(timeout_time)
 
-    def close(self):
+    def close(self) -> None:
         """
         Stop the client.
 
@@ -102,7 +107,7 @@ class CoAP(object):
         # self._socket.close()
 
     @property
-    def current_mid(self):
+    def current_mid(self) -> int:
         """
         Return the current MID.
 
@@ -111,7 +116,7 @@ class CoAP(object):
         return self._currentMID
 
     @current_mid.setter
-    def current_mid(self, c):
+    def current_mid(self, c:int) -> None:
         """
         Set the current MID.
 
@@ -120,7 +125,7 @@ class CoAP(object):
         assert isinstance(c, int)
         self._currentMID = c
 
-    def send_message(self, message, no_response=False):
+    def send_message(self, message:Message, no_response:Optional[bool]=False) -> None:
         """
         Prepare a message to send on the UDP socket. Eventually set retransmissions.
 
@@ -157,7 +162,7 @@ class CoAP(object):
             self.send_datagram(message)
 
     @staticmethod
-    def _wait_for_retransmit_thread(transaction):
+    def _wait_for_retransmit_thread(transaction:Transaction) -> None:
         """
         Only one retransmit thread at a time, wait for other to finish
         
@@ -168,7 +173,7 @@ class CoAP(object):
                 time.sleep(0.01)
                 continue
 
-    def _send_block_request(self, transaction):
+    def _send_block_request(self, transaction:Transaction) -> None:
         """
         A former request resulted in a block wise transfer. With this method, the block wise transfer
         will be continued, including triggering of the retry mechanism.
@@ -182,7 +187,7 @@ class CoAP(object):
         if transaction.request.type == defines.Types["CON"]:
             self._start_retransmission(transaction, transaction.request)
 
-    def send_datagram(self, message):
+    def send_datagram(self, message:Message) -> None:
         """
         Send a message over the UDP socket.
 
@@ -196,7 +201,7 @@ class CoAP(object):
         try:
             self._socket.sendto(raw_message, (host, port))
         except Exception as e:
-            if self._cb_ignore_write_exception is not None and isinstance(self._cb_ignore_write_exception, collections.Callable):
+            if self._cb_ignore_write_exception is not None and callable(self._cb_ignore_write_exception):
                 if not self._cb_ignore_write_exception(e, self):
                     raise
 
@@ -212,7 +217,7 @@ class CoAP(object):
             self._receiver_thread.daemon = True
             self._receiver_thread.start()
 
-    def _start_retransmission(self, transaction, message):
+    def _start_retransmission(self, transaction:Transaction, message:Message) -> None:
         """
         Start the retransmission task.
 
@@ -231,7 +236,7 @@ class CoAP(object):
                                                                  args=(transaction, message, future_time, 0))
                 transaction.retransmit_thread.start()
 
-    def _retransmit(self, transaction, message, future_time, retransmit_count):
+    def _retransmit(self, transaction:Transaction, message:Message, future_time:float, retransmit_count:int) -> None:
         """
         Thread function to retransmit the message in the future
 
@@ -271,7 +276,7 @@ class CoAP(object):
 
             logger.debug("retransmit loop ... exit")
 
-    def receive_datagram(self):
+    def receive_datagram(self) -> None:
         """
         Receive datagram from the UDP socket and invoke the callback function.
         """
@@ -283,7 +288,7 @@ class CoAP(object):
             except socket.timeout:  # pragma: no cover
                 continue
             except Exception as e:  # pragma: no cover
-                if self._cb_ignore_read_exception is not None and isinstance(self._cb_ignore_read_exception, collections.Callable):
+                if self._cb_ignore_read_exception is not None and callable(self._cb_ignore_read_exception):
                     if self._cb_ignore_read_exception(e, self):
                         continue
                 return
@@ -333,7 +338,7 @@ class CoAP(object):
         logger.debug("Exiting receiver Thread due to request")
         self._socket.close()
 
-    def _send_ack(self, transaction):
+    def _send_ack(self, transaction:Transaction) -> None:
         """
         Sends an ACK message for the response.
 
@@ -347,7 +352,7 @@ class CoAP(object):
             ack = self._messageLayer.send_empty(transaction, transaction.response, ack)
             self.send_datagram(ack)
 
-    def _send_rst(self, transaction):  # pragma: no cover
+    def _send_rst(self, transaction:Transaction) -> None:  # pragma: no cover
         """
         Sends an RST message for the response.
 

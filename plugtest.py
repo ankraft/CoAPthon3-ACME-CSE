@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Tuple, Union, Callable
+
 from queue import Queue
 import random
 import socket
@@ -20,21 +23,21 @@ __version__ = "2.0"
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.server_address = ("127.0.0.1", 5683)
         self.current_mid = random.randint(1, 1000)
         self.server_mid = random.randint(1000, 2000)
         self.server = CoAPServerPlugTest("127.0.0.1", 5683, starting_mid=self.server_mid)
         self.server_thread = threading.Thread(target=self.server.listen, args=(1,))
         self.server_thread.start()
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.server.close()
         self.server_thread.join(timeout=25)
         self.server = None
 
-    def _test_with_client(self, message_list):  # pragma: no cover
+    def _test_with_client(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -61,11 +64,11 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def client_callback(self, response):
+    def client_callback(self, response:Response) -> None: 
         print("Callback")
         self.queue.put(response)
 
-    def _test_with_client_observe(self, message_list, callback):  # pragma: no cover
+    def _test_with_client_observe(self, message_list:list[Tuple[Request, Response]], callback:Callable) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         token = None
         last_mid = 0
@@ -97,7 +100,7 @@ class Tests(unittest.TestCase):
         client.send_empty(message)
         client.stop()
 
-    def _test_plugtest(self, message_list):  # pragma: no cover
+    def _test_plugtest(self, message_list:list[Request, Response]) -> None:  # pragma: no cover
         serializer = Serializer()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for message, expected in message_list:
@@ -147,7 +150,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_link_02(self):
+    def test_td_coap_link_02(self) -> None:
         print("TD_COAP_LINK_02")
         path = "/.well-known/core"
 
@@ -169,7 +172,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_01(self):
+    def test_td_coap_core_01(self) -> None:
         print("TD_COAP_CORE_01")
         path = "/test"
 
@@ -190,7 +193,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_02(self):
+    def test_td_coap_core_02(self) -> None:
         print("TD_COAP_CORE_02")
         path = "/test_post"
 
@@ -214,7 +217,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_03(self):
+    def test_td_coap_core_03(self) -> None:
         print("TD_COAP_CORE_03")
         path = "/test"
 
@@ -274,7 +277,7 @@ class Tests(unittest.TestCase):
         exchange3 = (req, expected)
         self._test_with_client([exchange1, exchange2, exchange3])
 
-    def test_td_coap_core_04(self):
+    def test_td_coap_core_04(self) -> None:
         print("TD_COAP_CORE_04")
         path = "/test"
 
@@ -295,7 +298,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_05(self):
+    def test_td_coap_core_05(self) -> None:
         print("TD_COAP_CORE_05")
         path = "/test"
 
@@ -316,7 +319,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_06(self):
+    def test_td_coap_core_06(self) -> None:
         print("TD_COAP_CORE_06")
         path = "/test_post"
 
@@ -340,7 +343,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_07(self):
+    def test_td_coap_core_07(self) -> None:
         print("TD_COAP_CORE_07")
         path = "/test"
 
@@ -363,7 +366,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_08(self):
+    def test_td_coap_core_08(self) -> None:
         print("TD_COAP_CORE_08")
         path = "/test"
 
@@ -384,7 +387,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_09(self):
+    def test_td_coap_core_09(self) -> None:
         print("TD_COAP_CORE_09")
         path = "/separate"
 
@@ -412,7 +415,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_plugtest([(req, expected), (None, expected2)])
 
-    def test_td_coap_core_10(self):
+    def test_td_coap_core_10(self) -> None:
         print("TD_COAP_CORE_10")
         path = "/test"
 
@@ -422,7 +425,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.token = "ciao"
+        req.token = bytes("ciao", 'utf-8')
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -430,12 +433,12 @@ class Tests(unittest.TestCase):
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
         expected.payload = "Test Resource"
-        expected.token = "ciao"
+        expected.token = bytes("ciao", 'utf-8')
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_12(self):
+    def test_td_coap_core_12(self) -> None:
         print("TD_COAP_CORE_12")
         path = "/seg1/seg2/seg3"
 
@@ -455,7 +458,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_core_13(self):
+    def test_td_coap_core_13(self) -> None:
         print("TD_COAP_CORE_13")
         path = "/query?first=1&second=2&third=3"
 
@@ -476,7 +479,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([(req, expected)])
 
-    def test_td_coap_obs_01(self):
+    def test_td_coap_obs_01(self) -> None:
         print("TD_COAP_OBS_01")
         path = "/obs"
 
@@ -508,7 +511,7 @@ class Tests(unittest.TestCase):
         self.server_mid += 1
         self._test_plugtest([(req, expected), (None, expected2)])
 
-    def test_td_coap_obs_03(self):
+    def test_td_coap_obs_03(self) -> None:
         print("TD_COAP_OBS_03")
         path = "/obs"
 
@@ -550,7 +553,7 @@ class Tests(unittest.TestCase):
         self.server_mid += 1
         self._test_plugtest([(req, expected), (None, expected2), (rst, None)])
 
-    def test_td_coap_block_01(self):
+    def test_td_coap_block_01(self) -> None:
         print("TD_COAP_BLOCK_01")
         path = "/large"
 
@@ -598,7 +601,7 @@ class Tests(unittest.TestCase):
 
         self._test_plugtest([exchange1, exchange2])
 
-    def test_td_coap_block_01_client(self):
+    def test_td_coap_block_01_client(self) -> None:
         print("TD_COAP_BLOCK_01")
         path = "/large"
 
@@ -615,7 +618,8 @@ class Tests(unittest.TestCase):
         expected._mid = None
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
+        expected.payload = """\
+"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
 "You gettee in," he added, motioning to me with his tomahawk, and throwing the clothes to one side. He really did this
 in not only a civil but a really kind and charitable way. I stood looking at him a moment. For all his tattooings
 he was on the whole a clean, comely looking cannibal. What's all this fuss I have been making about, thought I to
@@ -645,7 +649,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_with_client([exchange1])
 
-    def test_td_coap_block_02_client(self):
+    def test_td_coap_block_02_client(self) -> None:
         print("TD_COAP_BLOCK_02")
         path = "/large"
 
@@ -661,7 +665,8 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         expected._mid = None
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
+        expected.payload = """\
+"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
 "You gettee in," he added, motioning to me with his tomahawk, and throwing the clothes to one side. He really did this
 in not only a civil but a really kind and charitable way. I stood looking at him a moment. For all his tattooings
 he was on the whole a clean, comely looking cannibal. What's all this fuss I have been making about, thought I to
@@ -691,7 +696,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_with_client([exchange1])
 
-    def test_td_coap_block_02(self):
+    def test_td_coap_block_02(self) -> None:
         print("TD_COAP_BLOCK_02")
         path = "/large"
 
@@ -738,7 +743,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_plugtest([exchange1, exchange2])
 
-    def test_td_coap_block_03(self):
+    def test_td_coap_block_03(self) -> None:
         print("TD_COAP_BLOCK_03")
         path = "/large-update"
 
@@ -748,7 +753,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe """
+        req.payload = b""""Me sabbee plenty"-grunted Queequeg, puffing away at his pipe """
         req.block1 = (0, 1, 64)
 
         expected = Response()
@@ -769,7 +774,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = """and sitting up in bed. "You gettee in," he added, motioning"""
+        req.payload = b"""and sitting up in bed. "You gettee in," he added, motioning"""
         req.block1 = (1, 0, 64)
 
         expected = Response()
@@ -795,14 +800,14 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed. "You gettee in," he added, motioning"""
+        expected.payload = b""""Me sabbee plenty"-grunted Queequeg, puffing away at his pipe and sitting up in bed. "You gettee in," he added, motioning"""
 
         exchange3 = (req, expected)
         self.current_mid += 1
 
         self._test_plugtest([exchange1, exchange2, exchange3])
 
-    def test_duplicate(self):
+    def test_duplicate(self) -> None:
         print("TEST_DUPLICATE")
         path = "/test"
 
@@ -823,7 +828,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_plugtest([(req, expected), (req, expected)])
 
-    def test_duplicate_not_completed(self):
+    def test_duplicate_not_completed(self) -> None:
         print("TEST_DUPLICATE_NOT_COMPLETED")
         path = "/long"
 
@@ -844,7 +849,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_plugtest([(req, None), (req, expected)])
 
-    def test_no_response(self):
+    def test_no_response(self) -> None:
         print("TEST_NO_RESPONSE")
         path = "/long"
 
@@ -865,7 +870,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
         self._test_plugtest([(req, expected)])
 
-    def test_edit_resource(self):
+    def test_edit_resource(self) -> None:
         print("TEST_EDIT_RESOURCE")
         path = "/obs"
 
@@ -875,7 +880,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = b"<value>test</value>"
 
         expected = Response()
         expected.type = defines.Types["ACK"]

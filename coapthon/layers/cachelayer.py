@@ -1,8 +1,12 @@
+from __future__ import annotations
+from typing import Optional
+
 import logging
 
 from coapthon.defines import Codes
 
 from coapthon.caching.cache import *
+from coapthon.transaction import Transaction
 
 __author__ = 'Emilio Vallati'
 
@@ -11,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 class CacheLayer(object):
 
-    def __init__(self, mode, max_dim=2048):
+    def __init__(self, mode:int, max_dim:Optional[int]=2048) -> None:
         """
 
         :param max_dim:
         """
         self.cache = Cache(mode, max_dim)
 
-    def receive_request(self, transaction):
+    def receive_request(self, transaction:Transaction) -> Transaction:
         """
         checks the cache for a response to the request
 
@@ -34,7 +38,7 @@ class CacheLayer(object):
             transaction.response.mid = transaction.request.mid
             transaction.cacheHit = True
 
-            age = transaction.cached_element.creation_time + transaction.cached_element.max_age - time.time()
+            age = int(transaction.cached_element.creation_time + transaction.cached_element.max_age - time.time())
             if transaction.cached_element.freshness is True:
                 if age <= 0:
                     logger.debug("resource not fresh")
@@ -54,7 +58,7 @@ class CacheLayer(object):
                 transaction.cacheHit = False
         return transaction
 
-    def send_response(self, transaction):
+    def send_response(self, transaction:Transaction) -> Transaction:
         """
         updates the cache with the response if there was a cache miss
 
@@ -69,7 +73,7 @@ class CacheLayer(object):
             self._handle_response(transaction)
         return transaction
 
-    def _handle_response(self, transaction):
+    def _handle_response(self, transaction:Transaction) -> Transaction:
         """
         handles responses based on their type
 

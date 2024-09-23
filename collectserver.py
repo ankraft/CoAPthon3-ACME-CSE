@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+from typing import Optional
+
 import getopt
 import json
 import random
@@ -11,23 +14,24 @@ import time
 from coapthon import defines
 from coapthon.resources.resource import Resource
 from coapthon.server.coap import CoAP
+from coapthon.messages.request import Request
 
 
 __author__ = 'Giacomo Tanganelli'
 
 
 class PowerResource(Resource):
-    def __init__(self, name="PowerResource", coap_server=None):
+    def __init__(self, name:Optional[str]="PowerResource", coap_server:Optional[CoAP]=None) -> None:
         super(PowerResource, self).__init__(name, coap_server, visible=True,
                                             observable=True, allow_children=False)
         self.resource_type = "Power Resource"
         self.content_type = "application/json"
-        self.cpu_power = 0
-        self.lpm_power = 0
-        self.listen_power = 0
-        self.transmit_power = 0
-        self.average_power = 0
-        self.aggregate_power = 0
+        self.cpu_power = 0.0
+        self.lpm_power = 0.0
+        self.listen_power = 0.0
+        self.transmit_power = 0.0
+        self.average_power = 0.0
+        self.aggregate_power = 0.0
         self.period = 5
         self.read_sensor(True)
 
@@ -38,7 +42,7 @@ class PowerResource(Resource):
                       {"n": "average", "v": self.average_power, "u": "mW"},
                       {"n": "aggregate", "v": self.aggregate_power, "u": "mW"}]
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         self.value = [{"n": "cpu", "v": self.cpu_power, "u": "mW", "bt": time.time()},
                       {"n": "lpm", "v": self.lpm_power, "u": "mW"},
                       {"n": "listen", "v": self.listen_power, "u": "mW"},
@@ -49,7 +53,7 @@ class PowerResource(Resource):
         self.payload = (defines.Content_types["application/json"], json.dumps(self.value))
         return self
 
-    def read_sensor(self, first=False):
+    def read_sensor(self, first:Optional[bool]=False) -> None:
         self.cpu_power = random.uniform(0, 0.3)
         self.lpm_power = random.uniform(0, 0.15)
         self.listen_power = random.uniform(0, 0.4)
@@ -77,24 +81,24 @@ class PowerResource(Resource):
 
 
 class TemperatureResource(Resource):
-    def __init__(self, name="TemperatureResource", coap_server=None):
+    def __init__(self, name:Optional[str]="TemperatureResource", coap_server:Optional[CoAP]=None):
         super(TemperatureResource, self).__init__(name, coap_server, visible=True,
                                                   observable=True, allow_children=False)
         self.resource_type = "Temperature Resource"
         self.content_type = "application/json"
-        self.temperature = 0
+        self.temperature:float = 0
         self.period = 5
         self.read_sensor(True)
 
         self.value = [{"n": "temperature", "v": self.temperature, "u": "Cel", "t": time.time()}]
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         self.value = [{"n": "temperature", "v": self.temperature, "u": "Cel", "t": time.time()}]
 
         self.payload = (defines.Content_types["application/json"], json.dumps(self.value))
         return self
 
-    def read_sensor(self, first=False):
+    def read_sensor(self, first:Optional[bool]=False) -> None:
         self.temperature = random.uniform(-10, 30)
 
         self.value = [{"n": "temperature", "v": self.temperature, "u": "Cel", "t": time.time()}]
@@ -112,12 +116,12 @@ class TemperatureResource(Resource):
 
 
 class BatteryResource(Resource):
-    def __init__(self, name="BatteryResource", coap_server=None):
+    def __init__(self, name:Optional[str]="BatteryResource", coap_server:Optional[defines.ServerT]=None):
         super(BatteryResource, self).__init__(name, coap_server, visible=True,
                                               observable=True, allow_children=False)
         self.resource_type = "Battery Resource"
         self.content_type = "application/json"
-        self.voltage = 0
+        self.voltage:float = 0
         self.indicator = 0
         self.period = 5
         self.read_sensor(True)
@@ -132,7 +136,7 @@ class BatteryResource(Resource):
         self.payload = (defines.Content_types["application/json"], json.dumps(self.value))
         return self
 
-    def read_sensor(self, first=False):
+    def read_sensor(self, first:Optional[bool]=False) -> None:
         self.voltage = random.uniform(0, 5)
         self.indicator = random.randint(1, 10)
 

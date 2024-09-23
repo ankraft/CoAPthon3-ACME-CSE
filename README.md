@@ -11,6 +11,8 @@ The changes mainly include:
 - Add the possibility to add own options and content types to the library.
 - Fixes issues when sending and receiving large responses in blockwise mode.
 - Improve the means to add an own request layer. The original implementation mainly supports pre-registered resources, which is is difficult to the way oneM2M resources work.
+- Add type hints to the library.
+
 
 ## Installation
 

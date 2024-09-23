@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Tuple, Any, Union, cast
 import logging
 import random
 import socket
@@ -11,12 +13,13 @@ from coapthon.layers.forwardLayer import ForwardLayer
 from coapthon.layers.messagelayer import MessageLayer
 from coapthon.layers.observelayer import ObserveLayer
 from coapthon.layers.resourcelayer import ResourceLayer
+from coapthon.transaction import Transaction
 from coapthon.messages.message import Message
 from coapthon.messages.request import Request
 from coapthon.resources.resource import Resource
 from coapthon.serializer import Serializer
 from coapthon.utils import Tree
-
+from coapthon.defines import ServerT
 __author__ = 'Giacomo Tanganelli'
 
 
@@ -27,7 +30,7 @@ class CoAP(object):
     """
     Implementation of the Forward Proxy
     """
-    def __init__(self, server_address, multicast=False, starting_mid=None, cache=False, sock=None):
+    def __init__(self, server_address:ServerT, multicast:bool=False, starting_mid:int=None, cache:bool=False, sock:socket.socket=None) -> None:
         """
         Initialize the Forward Proxy.
 
@@ -39,9 +42,9 @@ class CoAP(object):
         """
         self.stopped = threading.Event()
         self.stopped.clear()
-        self.to_be_stopped = []
-        self.purge = threading.Thread(target=self.purge)
-        self.purge.start()
+        self.to_be_stopped:list[threading.Event] = []
+        self.purgeThread = threading.Thread(target=self.purge)
+        self.purgeThread.start()
         self.cache_enable = cache
 
         self._messageLayer = MessageLayer(starting_mid)
@@ -116,7 +119,7 @@ class CoAP(object):
 
             self._socket.bind(self.server_address)
 
-    def purge(self):
+    def purge(self) -> None:
         """
         Clean old transactions
         """
@@ -124,7 +127,7 @@ class CoAP(object):
             self.stopped.wait(timeout=defines.EXCHANGE_LIFETIME)
             self._messageLayer.purge()
 
-    def listen(self, timeout=10):
+    def listen(self, timeout:int=10) -> None:
         """
         Listen for incoming messages. Timeout is used to check if the server must be switched off.
 
@@ -147,7 +150,7 @@ class CoAP(object):
         logging.debug("closing socket")
         self._socket.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Stop the server.
 
@@ -158,7 +161,7 @@ class CoAP(object):
             event.set()
         # self._socket.close()
 
-    def receive_datagram(self, args):
+    def receive_datagram(self, args:Tuple[Any, Union[defines.ServerT, Tuple[str, int, Any, Any]]]) -> None:
         """
         Handle messages coming from the udp socket.
 
@@ -169,9 +172,9 @@ class CoAP(object):
         logging.debug("receiving datagram")
 
         try:
-            host, port = client_address
+            host, port = cast(defines.ServerT, client_address)
         except ValueError:
-            host, port, tmp1, tmp2 = client_address
+            host, port, tmp1, tmp2 = client_address # type: ignore
 
         client_address = (host, port)
         
@@ -257,7 +260,7 @@ class CoAP(object):
         else:  # is Response
             logger.error("Received response from %s", message.source)
 
-    def send_datagram(self, message):
+    def send_datagram(self, message:Message) -> None:
         """
         Send a message through the udp socket.
 
@@ -269,11 +272,11 @@ class CoAP(object):
             logger.debug("send_datagram - " + str(message))
             serializer = Serializer()
 
-            message = serializer.serialize(message)
+            datagram = serializer.serialize(message)
 
-            self._socket.sendto(message, (host, port))
+            self._socket.sendto(datagram, (host, port))
 
-    def _start_retransmission(self, transaction, message):
+    def _start_retransmission(self, transaction:Transaction, message:Message) -> None:
         """
         Start the retransmission task.
 
@@ -291,7 +294,7 @@ class CoAP(object):
                 self.to_be_stopped.append(transaction.retransmit_stop)
                 transaction.retransmit_thread.start()
 
-    def _retransmit(self, transaction, message, future_time, retransmit_count):
+    def _retransmit(self, transaction:Transaction, message:Message, future_time:float, retransmit_count:int) -> None:
         """
         Thread function to retransmit the message in the future
 
@@ -324,7 +327,7 @@ class CoAP(object):
             transaction.retransmit_stop = None
             transaction.retransmit_thread = None
 
-    def _start_separate_timer(self, transaction):
+    def _start_separate_timer(self, transaction:Transaction) -> threading.Timer:
         """
         Start a thread to handle separate mode.
 
@@ -337,7 +340,7 @@ class CoAP(object):
         return t
 
     @staticmethod
-    def _stop_separate_timer(timer):
+    def _stop_separate_timer(timer:threading.Timer) -> None:
         """
         Stop the separate Thread if an answer has been already provided to the client.
 
@@ -345,7 +348,7 @@ class CoAP(object):
         """
         timer.cancel()
 
-    def _send_ack(self, transaction):
+    def _send_ack(self, transaction:Transaction) -> None:
         """
         Sends an ACK message for the request.
 

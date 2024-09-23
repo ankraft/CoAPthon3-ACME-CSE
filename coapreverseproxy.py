@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+from typing import Optional
+
 import getopt
 import sys
 from coapthon.reverse_proxy.coap import CoAP
@@ -8,18 +11,17 @@ __author__ = 'Giacomo Tanganelli'
 
 
 class CoAPReverseProxy(CoAP):
-    def __init__(self, host, port, xml_file, multicast=False, cache=False, starting_mid=None):
+    def __init__(self, host:str, port:int, xml_file:str, multicast:Optional[bool]=False, cache:Optional[bool]=False, starting_mid:Optional[int]=None) -> None:
         CoAP.__init__(self, (host, port), xml_file=xml_file, multicast=multicast, starting_mid=starting_mid,
                       cache=cache)
-
         print("CoAP Proxy start on " + host + ":" + str(port))
 
 
-def usage():  # pragma: no cover
+def usage() -> None:  # pragma: no cover
     print("coapreverseproxy.py -i <ip address> -p <port> -f <xml_file>")
 
 
-def main(argv):  # pragma: no cover
+def main(argv:list[str]) -> None:  # pragma: no cover
     ip = "0.0.0.0"
     port = 5684
     file_xml = "reverse_proxy_mapping.xml"

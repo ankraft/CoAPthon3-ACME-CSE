@@ -14,6 +14,9 @@
 #	- Small tweaks to fixed blocking tranfers
 #
 
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
+
 import logging
 
 from coapthon import defines
@@ -21,12 +24,24 @@ from coapthon import utils
 from coapthon.messages.request import Request
 from coapthon.messages.response import Response
 
+if TYPE_CHECKING:
+	from coapthon.messages.message import Message
+	from coapthon.messages.option import Option
+	from coapthon.transaction import Transaction 
+
 logger = logging.getLogger(__name__)
 
 __author__ = 'Giacomo Tanganelli'
 
 class BlockItem(object):
-	def __init__(self, byte, num, m, size, payload=None, content_type=None, options=None, code=None):
+	def __init__(self, 	byte:int, 
+			  			num:int, 
+						m:int, 
+						size:int, 
+						payload:Optional[bytes]=None, 
+						content_type:Optional[int]=None, 
+						options:Optional[list[Option]]=None, 
+						code:Optional[int]=None) -> None:
 		"""
 		Data structure to store Block parameters
 
@@ -49,7 +64,7 @@ class BlockItem(object):
 		self.code = code	# akr
 
 
-def _filterOptions(options):
+def _filterOptions(options:list[Option]) -> list[Option]:
 	"""
 	Filter the options to remove the blockwise options
 
@@ -58,20 +73,22 @@ def _filterOptions(options):
 	:rtype : list
 	:return: the filtered options
 	"""
-	return [option for option in options if option.number not in [defines.OptionRegistry.BLOCK1.number, defines.OptionRegistry.BLOCK2.number, defines.OptionRegistry.SIZE1.number, defines.OptionRegistry.SIZE2.number]]
+	return [option 
+		 	for option in options 
+			if option.number not in (defines.OptionRegistry.BLOCK1.number, defines.OptionRegistry.BLOCK2.number, defines.OptionRegistry.SIZE1.number, defines.OptionRegistry.SIZE2.number)]
 
 
 class BlockLayer(object):
 	"""
 	Handle the Blockwise options. Hides all the exchange to both servers and clients.
 	"""
-	def __init__(self):
-		self._block1_sent = {}  # type: dict[hash, BlockItem]
-		self._block2_sent = {}  # type: dict[hash, BlockItem]
-		self._block1_receive = {}  # type: dict[hash, BlockItem]
-		self._block2_receive = {}  # type: dict[hash, BlockItem]
+	def __init__(self) -> None:
+		self._block1_sent:dict[int, BlockItem] = {}  
+		self._block2_sent:dict[int, BlockItem]  = {}  
+		self._block1_receive:dict[int, BlockItem]  = {} 
+		self._block2_receive:dict[int, BlockItem]  = {}  
 
-	def receive_request(self, transaction):
+	def receive_request(self, transaction:Transaction) -> Optional[Transaction]:
 		"""
 		Handles the Blocks option in a incoming request.
 
@@ -147,7 +164,7 @@ class BlockLayer(object):
 
 		return transaction
 
-	def receive_response(self, transaction):
+	def receive_response(self, transaction:Transaction) -> Optional[Transaction]:
 		"""
 		Handles the Blocks option in a incoming response.
 
@@ -231,7 +248,7 @@ class BlockLayer(object):
 			transaction.block_transfer = False
 		return transaction
 
-	def receive_empty(self, empty, transaction):
+	def receive_empty(self, empty:Message, transaction:Transaction) -> Transaction:
 		"""
 		Dummy function. Used to do not broke the layered architecture.
 
@@ -244,7 +261,7 @@ class BlockLayer(object):
 		"""
 		return transaction
 
-	def send_response(self, transaction):
+	def send_response(self, transaction:Transaction) -> Transaction:
 		"""
 		Handles the Blocks option in a outgoing response.
 
@@ -311,7 +328,7 @@ class BlockLayer(object):
 
 		return transaction
 
-	def send_request(self, request):
+	def send_request(self, request:Request) -> Request:
 		"""
 		Handles the Blocks option in a outgoing request.
 
@@ -319,7 +336,7 @@ class BlockLayer(object):
 		:param request: the outgoing request
 		:return: the edited request
 		"""
-		assert isinstance(request, Request)
+		# assert isinstance(request, Request)
 		if request.block1 or (request.payload is not None and len(request.payload) > defines.MAX_PAYLOAD):
 			host, port = request.destination
 			key_token = utils.str_append_hash(host, port, request.token)
@@ -341,13 +358,13 @@ class BlockLayer(object):
 			host, port = request.destination
 			key_token = utils.str_append_hash(host, port, request.token)
 			num, m, size = request.block2
-			item = BlockItem(size, num, m, size, "", None)
+			item = BlockItem(size, num, m, size, b"", None)
 			self._block2_sent[key_token] = item
 			return request
 		return request
 
 	@staticmethod
-	def incomplete(transaction):
+	def incomplete(transaction:Transaction) -> Transaction:
 		"""
 		Notifies incomplete blockwise exchange.
 
@@ -364,7 +381,7 @@ class BlockLayer(object):
 		return transaction
 
 	@staticmethod
-	def error(transaction, code):  # pragma: no cover
+	def error(transaction:Transaction, code:int) -> Transaction:  # pragma: no cover
 		"""
 		Notifies generic error on blockwise exchange.
 

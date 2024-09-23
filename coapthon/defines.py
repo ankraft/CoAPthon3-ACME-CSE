@@ -2,6 +2,7 @@
 
 import collections
 import struct
+from typing import Tuple
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -106,7 +107,7 @@ class OptionRegistry(object):
 	"""
 	All CoAP options. Every option is represented as: (NUMBER, NAME, VALUE_TYPE, REPEATABLE, DEFAULT)
 	"""
-	def __init__(self):
+	def __init__(self) -> None:
 		pass
 
 	RESERVED =      OptionItem(0, "Reserved",       UNKNOWN, True, None)
@@ -159,7 +160,7 @@ class OptionRegistry(object):
 	}
 
 	@staticmethod
-	def get_option_flags(option_num):
+	def get_option_flags(option_num:int) -> Tuple[bool, bool, bool]:
 		"""
 		Get Critical, UnSafe, NoCacheKey flags from the option number
 		as per RFC 7252, section 5.4.6
@@ -320,3 +321,6 @@ CoAP_HTTP = {
 	"PROXY_NOT_SUPPORTED": "502"
 
 }
+
+ServerT = Tuple[str, int]       # (host, port)
+BlockT = Tuple[int, int, int]   # (num, m, size)

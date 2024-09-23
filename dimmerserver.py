@@ -1,9 +1,13 @@
+from __future__ import annotations
+from typing import Optional
+
 from coapthon.resources.resource import Resource
 from coapthon.server.coap import CoAP
+from coapthon.messages.request import Request
 
 
 class DimmerResource(Resource):
-    def __init__(self, name="DimmerResource", coap_server=None):
+    def __init__(self, name:Optional[str]="DimmerResource", coap_server:Optional[CoAP]=None):
         super(DimmerResource, self).__init__(name, coap_server, visible=True,
                                              observable=True, allow_children=True)
         self.value = 0
@@ -12,11 +16,11 @@ class DimmerResource(Resource):
         self.content_type = "text/plain"
         self.interface_type = "urn:oma:lwm2m:ext:3311:5851"
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         self.payload = str(self.value)
         return self
 
-    def render_PUT(self, request):
+    def render_PUT(self, request:Request) -> Optional[Resource]:
         if request.payload.isdigit():
             amount = int(request.payload)
             if 0 <= amount <= 100:
@@ -27,7 +31,7 @@ class DimmerResource(Resource):
 
 
 class SwitchResource(Resource):
-    def __init__(self, name="SwitchResource", coap_server=None):
+    def __init__(self, name:Optional[str]="SwitchResource", coap_server:Optional[CoAP]=None) -> None:
         super(SwitchResource, self).__init__(name, coap_server, visible=True,
                                              observable=True, allow_children=True)
         self.value = 0
@@ -36,11 +40,11 @@ class SwitchResource(Resource):
         self.content_type = "text/plain"
         self.interface_type = "urn:oma:lwm2m:ext:3311:5850"
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         self.payload = str(self.value)
         return self
 
-    def render_PUT(self, request):
+    def render_PUT(self, request:Request) -> Optional[Resource]:
         if request.payload.isdigit():
             status = int(request.payload)
             if 0 <= status <= 1:
@@ -51,13 +55,13 @@ class SwitchResource(Resource):
 
 
 class CoAPServer(CoAP):
-    def __init__(self, host, port, multicast=False):
+    def __init__(self, host:str, port:int, multicast:Optional[bool]=False) -> None:
         CoAP.__init__(self, (host, port), multicast)
         self.add_resource('dimmer/', DimmerResource())
         self.add_resource('switch/', SwitchResource())
 
 
-def main():  # pragma: no cover
+def main() -> None:  # pragma: no cover
     ip = "127.0.0.1"
     port = 5683
 

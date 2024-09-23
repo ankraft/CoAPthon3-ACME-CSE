@@ -1,7 +1,13 @@
+from __future__ import annotations
+from typing import Union, TYPE_CHECKING
+
 import logging
 
-from cachetools import LRUCache
+from cachetools import LRUCache # type: ignore
+
 from coapthon.caching.coapcache import CoapCache
+if TYPE_CHECKING:
+	from coapthon.caching.cache import CacheKey, CacheElement, ReverseCacheKey
 
 __author__ = 'Emilio Vallati'
 
@@ -9,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class CoapLRUCache(CoapCache):
-    def __init__(self, max_dim):
+    def __init__(self, max_dim:int) -> None:
         """
 
         :param max_dim:
         """
         self.cache = LRUCache(maxsize=max_dim)
 
-    def update(self, key, element):
+    def update(self, key:Union[CacheKey, ReverseCacheKey], element:CacheElement) -> None:
         """
 
         :param key:
@@ -26,7 +32,7 @@ class CoapLRUCache(CoapCache):
         logger.debug("updating cache, key: %s, element: %s", key.hashkey, element)
         self.cache.update([(key.hashkey, element)])
 
-    def get(self, key):
+    def get(self, key:Union[CacheKey, ReverseCacheKey]) -> CacheElement:
         """
 
         :param key:
@@ -35,19 +41,19 @@ class CoapLRUCache(CoapCache):
         try:
             response = self.cache[key.hashkey]
         except KeyError:
-            logger.debug("problem here", exc_info=1)
+            # logger.debug("problem here", exc_info=1)
             response = None
         return response
 
-    def is_full(self):
+    def is_full(self) -> bool:
         """
         :return:
         """
-        if self.cache.currsize == self.cache.maxsize:
+        if self.cache and self.cache.currsize == self.cache.maxsize:
             return True
         return False
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """
 
         :return:
@@ -57,13 +63,13 @@ class CoapLRUCache(CoapCache):
             return True
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = []
         for e in list(self.cache.values()):
             msg.append(str(e))
         return "Cache Size: {sz}\n" + "\n".join(msg)
 
-    def debug_print(self):
+    def debug_print(self) -> str:
         """
 
         :return:

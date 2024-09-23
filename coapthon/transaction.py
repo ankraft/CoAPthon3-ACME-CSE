@@ -1,4 +1,13 @@
+
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 import threading
+
+if TYPE_CHECKING:
+	from coapthon.caching.cache import CacheElement
+	from coapthon.messages.request import Request
+	from coapthon.messages.response import Response
+	from coapthon.resources.resource import Resource
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -7,7 +16,7 @@ class Transaction(object):
     """
     Transaction object to bind together a request, a response and a resource.
     """
-    def __init__(self, request=None, response=None, resource=None, timestamp=None):
+    def __init__(self, request:Optional[Request]=None, response:Optional[Response]=None, resource:Optional[Resource]=None, timestamp:Optional[float]=None) -> None:
         """
         Initialize a Transaction object.
 
@@ -19,26 +28,26 @@ class Transaction(object):
         self._response = response
         self._request = request
         self._resource = resource
-        self._timestamp = timestamp
+        self._timestamp:float = timestamp
         self._completed = False
         self._block_transfer = False
         self.notification = False
-        self.separate_timer = None
-        self.retransmit_thread = None
-        self.retransmit_stop = None
+        self.separate_timer:Optional[threading.Timer] = None
+        self.retransmit_thread:Optional[threading.Thread] = None
+        self.retransmit_stop:Optional[threading.Event] = None
         self._lock = threading.RLock()
 
         self.cacheHit = False
-        self.cached_element = None
+        self.cached_element:Optional[CacheElement] = None
 
-    def __enter__(self):
+    def __enter__(self):	# type:ignore
         self._lock.acquire()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb): # type:ignore
         self._lock.release()
 
     @property
-    def response(self):
+    def response(self) -> Response:
         """
         Return the response.
 
@@ -48,7 +57,7 @@ class Transaction(object):
         return self._response
 
     @response.setter
-    def response(self, value):
+    def response(self, value:Response) -> None:
         """
         Set the response.
 
@@ -58,7 +67,7 @@ class Transaction(object):
         self._response = value
 
     @property
-    def request(self):
+    def request(self) -> Request:
         """
         Return the request.
 
@@ -68,7 +77,7 @@ class Transaction(object):
         return self._request
 
     @request.setter
-    def request(self, value):
+    def request(self, value:Request) -> None:
         """
         Set the request.
 
@@ -78,7 +87,7 @@ class Transaction(object):
         self._request = value
 
     @property
-    def resource(self):
+    def resource(self) -> Resource:
         """
         Return the resource.
 
@@ -88,7 +97,7 @@ class Transaction(object):
         return self._resource
 
     @resource.setter
-    def resource(self, value):
+    def resource(self, value:Resource) -> None:
         """
         Set the resource.
 
@@ -98,7 +107,7 @@ class Transaction(object):
         self._resource = value
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> float:
         """
         Return the timestamp.
 
@@ -107,7 +116,7 @@ class Transaction(object):
         return self._timestamp
 
     @timestamp.setter
-    def timestamp(self, t):
+    def timestamp(self, t:float) -> None:
         """
         Set the timestamp.
 
@@ -116,7 +125,7 @@ class Transaction(object):
         self._timestamp = t
 
     @property
-    def completed(self):
+    def completed(self) -> bool:
         """
         Return the completed attribute.
 
@@ -125,18 +134,18 @@ class Transaction(object):
         return self._completed
 
     @completed.setter
-    def completed(self, b):
+    def completed(self, b:bool) -> None:
         """
         Set the completed attribute.
 
         :param b: the completed value
         :type b: bool
         """
-        assert isinstance(b, bool)
+        # assert isinstance(b, bool)
         self._completed = b
 
     @property
-    def block_transfer(self):
+    def block_transfer(self) -> bool:
         """
         Return the block_transfer attribute.
 
@@ -145,12 +154,12 @@ class Transaction(object):
         return self._block_transfer
 
     @block_transfer.setter
-    def block_transfer(self, b):
+    def block_transfer(self, b:bool) -> None:
         """
         Set the block_transfer attribute.
 
         :param b: the block_transfer value
         :type b: bool
         """
-        assert isinstance(b, bool)
+        # assert isinstance(b, bool)
         self._block_transfer = b

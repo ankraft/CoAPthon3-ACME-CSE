@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Optional, Tuple, Callable
+
 import logging
 import threading
 import time
 
 from coapthon import defines
 from coapthon.resources.resource import Resource
-
+from coapthon.server.coap import CoAP
+from coapthon.messages.request import Request
 __author__ = 'Giacomo Tanganelli'
 
 
@@ -14,16 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class TestResource(Resource):
-    def __init__(self, name="TestResource", coap_server=None):
+    def __init__(self, name:Optional[str]="TestResource", coap_server:Optional[CoAP]=None) -> None:
         super(TestResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=True)
         self.payload = "Test Resource"
         self.resource_type = "Type1"
         self.maximum_size_estimated = len(self.payload)
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         return self
 
-    def render_PUT(self, request):
+    def render_PUT(self, request:Request) -> Resource:
         for option in request.options:
             if option.number == defines.OptionRegistry.CONTENT_TYPE.number:
                 self.payload = (option.value, request.payload)
@@ -31,7 +35,7 @@ class TestResource(Resource):
         self.payload = request.payload
         return self
 
-    def render_POST(self, request):
+    def render_POST(self, request:Request) -> Resource:
         res = TestResource()
         res.location_query = request.uri_query
         for option in request.options:
@@ -42,42 +46,42 @@ class TestResource(Resource):
         res.payload = request.payload
         return res
 
-    def render_DELETE(self, request):
+    def render_DELETE(self, request:Request) -> bool:
         return True
 
 
 class SeparateResource(Resource):
 
-    def __init__(self, name="Separate", coap_server=None):
+    def __init__(self, name:Optional[str]="Separate", coap_server:Optional[CoAP]=None) -> None:
         super(SeparateResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
         self.payload = "Separate Resource"
         self.interface_type = "separate"
         self.add_content_type("text/plain")
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Tuple[Resource, Callable]:
         return self, self.render_GET_separate
 
-    def render_GET_separate(self, request):
+    def render_GET_separate(self, request:Request) -> Resource:
         time.sleep(5)
         return self
 
 
 class ObservableResource(Resource):
 
-    def __init__(self, name="Obs", coap_server=None):
+    def __init__(self, name:Optional[str]="Obs", coap_server:Optional[CoAP]=None) -> None:
         super(ObservableResource, self).__init__(name, coap_server, visible=True, observable=True, allow_children=False)
         self.payload = "Observable Resource"
         self.period = 5
         self.update(True)
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         return self
 
-    def render_POST(self, request):
+    def render_POST(self, request:Request) -> Resource:
         self.payload = request.payload
         return self
 
-    def update(self, first=False):
+    def update(self, first:Optional[bool]=False) -> None:
         self.payload = "Observable Resource"
         if not self._coap_server.stopped.isSet():
 
@@ -93,10 +97,11 @@ class ObservableResource(Resource):
 
 class LargeResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
+    def __init__(self, name:Optional[str]="Large", coap_server:Optional[CoAP]=None) -> None:
         super(LargeResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
         # 2000 bytes
-        self.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
+        self.payload = """\
+"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
 "You gettee in," he added, motioning to me with his tomahawk, and throwing the clothes to one side. He really did this
 in not only a civil but a really kind and charitable way. I stood looking at him a moment. For all his tattooings
 he was on the whole a clean, comely looking cannibal. What's all this fuss I have been making about, thought I to
@@ -118,32 +123,31 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
  when I first awoke, I could hardly tell it from the quilt, they so blended their hues together; and it was only by
  the sense of weight and pressure that I could tell that Queequeg was hugging"""
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         return self
 
 
 class LargeUpdateResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
-        super(LargeUpdateResource, self).__init__(name, coap_server, visible=True, observable=False,
-                                                  allow_children=False)
+    def __init__(self, name:Optional[str]="Large", coap_server:Optional[CoAP]=None) -> None:
+        super(LargeUpdateResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
         self.payload = ""
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         return self
 
-    def render_PUT(self, request):
+    def render_PUT(self, request:Request) -> Resource:
         self.payload = request.payload
         return self
 
 
 class LongResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
+    def __init__(self, name:Optional[str]="Large", coap_server:Optional[CoAP]=None) -> None:
         super(LongResource, self).__init__(name, coap_server, visible=True, observable=False,
                                                   allow_children=False)
         self.payload = ""
 
-    def render_GET(self, request):
+    def render_GET(self, request:Request) -> Resource:
         time.sleep(5)
         return self

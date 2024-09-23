@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Optional
+
 import getopt
 import sys
 
@@ -9,7 +12,7 @@ __author__ = 'Giacomo Tanganelli'
 
 
 class CoAPServerPlugTest(CoAP):
-    def __init__(self, host, port, multicast=False, starting_mid=None):
+    def __init__(self, host:str, port:int, multicast:Optional[bool]=False, starting_mid:Optional[int]=None):
         CoAP.__init__(self, (host, port), multicast, starting_mid)
         self.add_resource('test/', TestResource())
         self.add_resource('separate/', SeparateResource())
@@ -23,11 +26,11 @@ class CoAPServerPlugTest(CoAP):
         self.add_resource('long/', LongResource())
 
 
-def usage():  # pragma: no cover
+def usage() -> None:  # pragma: no cover
     print("plugtest_coapserver.py -i <ip address> -p <port>")
 
 
-def main(argv):  # pragma: no cover
+def main(argv:list[str]) -> None:  # pragma: no cover
     ip = "127.0.0.1"
     port = 5683
     try:

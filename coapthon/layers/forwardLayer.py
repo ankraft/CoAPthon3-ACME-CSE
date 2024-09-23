@@ -1,10 +1,18 @@
+from __future__ import annotations
+from typing import Optional, cast
+
 import copy
 import logging
-from coapthon.messages.request import Request
 from coapclient import HelperClient
+from coapthon.messages.request import Request
+from coapthon.resources.resource import Resource
 from coapthon.messages.response import Response
-from coapthon import defines
 from coapthon.resources.remoteResource import RemoteResource
+from coapthon.transaction import Transaction
+from coapthon.server.coap import CoAP
+from coapthon.forward_proxy.coap import CoAP as ForwardCoAP
+from coapthon.reverse_proxy.coap import CoAP as ReverseCoAP
+from coapthon import defines
 from coapthon.utils import parse_uri
 
 __author__ = 'Giacomo Tanganelli'
@@ -16,10 +24,10 @@ class ForwardLayer(object):
     """
     Class used by Proxies to forward messages.
     """
-    def __init__(self, server):
+    def __init__(self, server:CoAP|ForwardCoAP|ReverseCoAP) -> None:
         self._server = server
 
-    def receive_request(self, transaction):
+    def receive_request(self, transaction:Transaction) -> Transaction:
         """
         Setup the transaction for forwarding purposes on Forward Proxies.
          
@@ -44,7 +52,7 @@ class ForwardLayer(object):
         transaction.response.token = transaction.request.token
         return self._forward_request(transaction, (host, port), path)
 
-    def receive_request_reverse(self, transaction):
+    def receive_request_reverse(self, transaction:Transaction) -> Transaction:
         """
         Setup the transaction for forwarding purposes on Reverse Proxies.
          
@@ -72,7 +80,7 @@ class ForwardLayer(object):
                     new = True
                 path = new_path
             try:
-                resource = self._server.root[path]
+                resource = cast(Resource, self._server.root[path])
             except KeyError:
                 resource = None
             if resource is None or path == '/':
@@ -84,7 +92,7 @@ class ForwardLayer(object):
         return transaction
 
     @staticmethod
-    def _forward_request(transaction, destination, path):
+    def _forward_request(transaction:Transaction, destination:defines.ServerT, path:str) -> Transaction:
         """
         Forward requests.
 
@@ -122,7 +130,7 @@ class ForwardLayer(object):
 
         return transaction
 
-    def _handle_request(self, transaction, new_resource):
+    def _handle_request(self, transaction:Transaction, new_resource:bool) -> Transaction:
         """
         Forward requests. Used by reverse proxies to also create new virtual resources on the proxy 
         in case of created resources
@@ -134,7 +142,7 @@ class ForwardLayer(object):
         :param new_resource: if the request will generate a new resource 
         :return: the edited transaction
         """
-        client = HelperClient(transaction.resource.remote_server)
+        client = HelperClient(cast(RemoteResource, transaction.resource).remote_server)
         request = Request()
         request.options = copy.deepcopy(transaction.request.options)
         del request.block2
@@ -147,7 +155,7 @@ class ForwardLayer(object):
         # request.observe = transaction.request.observe
 
         request.uri_path = "/".join(transaction.request.uri_path.split("/")[1:])
-        request.destination = transaction.resource.remote_server
+        request.destination = cast(RemoteResource, transaction.resource).remote_server
         request.payload = transaction.request.payload
         request.code = transaction.request.code
         logger.debug("forward_request - " + str(request))
@@ -163,11 +171,11 @@ class ForwardLayer(object):
             transaction.response.location_path = transaction.request.uri_path.split("/")[0] + "/" + lp
             # TODO handle observing
             if new_resource:
-                resource = RemoteResource('server', transaction.resource.remote_server, lp, coap_server=self,
+                resource = RemoteResource('server', cast(RemoteResource, transaction.resource).remote_server, lp, coap_server=self,
                                           visible=True,
                                           observable=False,
                                           allow_children=True)
-                self._server.add_resource(transaction.response.location_path, resource)
+                self._server.add_resource(transaction.response.location_path, resource)	# type: ignore[union-attr]
         if response.code == defines.Codes.DELETED.number:
             del self._server.root["/" + transaction.request.uri_path]
         return transaction

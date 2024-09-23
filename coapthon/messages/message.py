@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Optional, Union, cast, Tuple
 import binascii
 
 from coapthon import defines
@@ -13,28 +15,28 @@ class Message(object):
     """
     Class to handle the Messages.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Data structure that represent a CoAP message
         """
-        self._type = None
-        self._mid = None
-        self._token = None
-        self._options = []
-        self._payload = None
-        self._destination = None
-        self._source = None
-        self._code = None
-        self._acknowledged = None
-        self._rejected = None
-        self._timeouted = None
-        self._cancelled = None
-        self._duplicated = None
-        self._timestamp = None
-        self._version = 1
+        self._type:Optional[int] = None
+        self._mid:Optional[int] = None
+        self._token:Optional[bytes] = None
+        self._options:list[Option] = []
+        self._payload:Optional[bytes] = None
+        self._destination:Optional[defines.ServerT] = None
+        self._source:Optional[defines.ServerT] = None
+        self._code:Optional[int] = None
+        self._acknowledged:Optional[bool] = None
+        self._rejected:Optional[bool] = None
+        self._timeouted:Optional[bool] = None
+        self._cancelled:Optional[bool] = None
+        self._duplicated:Optional[bool] = None
+        self._timestamp:Optional[float] = None
+        self._version:int = 1
 
     @property
-    def version(self):
+    def version(self) -> int:
         """
         Return the CoAP version
 
@@ -43,7 +45,7 @@ class Message(object):
         return self._version
 
     @version.setter
-    def version(self, v):
+    def version(self, v:int) -> None:
         """
         Sets the CoAP version
 
@@ -55,7 +57,7 @@ class Message(object):
         self._version = v
 
     @property
-    def type(self):
+    def type(self) -> int:
         """
         Return the type of the message.
 
@@ -64,7 +66,7 @@ class Message(object):
         return self._type
 
     @type.setter
-    def type(self, value):
+    def type(self, value:int) -> None:
         """
         Sets the type of the message.
 
@@ -77,7 +79,7 @@ class Message(object):
         self._type = value
 
     @property
-    def mid(self):
+    def mid(self) -> int:
         """
         Return the mid of the message.
 
@@ -86,7 +88,7 @@ class Message(object):
         return self._mid
 
     @mid.setter
-    def mid(self, value):
+    def mid(self, value:int) -> None:
         """
         Sets the MID of the message.
 
@@ -99,14 +101,14 @@ class Message(object):
         self._mid = value
 
     @mid.deleter
-    def mid(self):
+    def mid(self) -> None:
         """
         Unset the MID of the message.
         """
         self._mid = None
 
     @property
-    def token(self):
+    def token(self) -> bytes:
         """
         Get the Token of the message.
 
@@ -115,7 +117,7 @@ class Message(object):
         return self._token
 
     @token.setter
-    def token(self, value):
+    def token(self, value:bytes) -> None:
         """
         Set the Token of the message.
 
@@ -134,14 +136,14 @@ class Message(object):
         self._token = value
 
     @token.deleter
-    def token(self):
+    def token(self) -> None:
         """
         Unset the Token of the message.
         """
         self._token = None
 
     @property
-    def options(self):
+    def options(self) -> list[Option]:
         """
         Return the options of the CoAP message.
 
@@ -151,7 +153,7 @@ class Message(object):
         return self._options
 
     @options.setter
-    def options(self, value):
+    def options(self, value:list[Option]) -> None:
         """
         Set the options of the CoAP message.
 
@@ -164,7 +166,7 @@ class Message(object):
         self._options = value
 
     @property
-    def payload(self):
+    def payload(self) -> bytes:
         """
         Return the payload.
 
@@ -173,7 +175,7 @@ class Message(object):
         return self._payload
 
     @payload.setter
-    def payload(self, value):
+    def payload(self, value:Union[bytes,Tuple[int, bytes]]) -> None:
         """
         Sets the payload of the message and eventually the Content-Type
 
@@ -187,7 +189,7 @@ class Message(object):
             self._payload = value
 
     @property
-    def destination(self):
+    def destination(self) -> defines.ServerT:
         """
         Return the destination of the message.
 
@@ -197,7 +199,7 @@ class Message(object):
         return self._destination
 
     @destination.setter
-    def destination(self, value):
+    def destination(self, value:defines.ServerT) -> None:
         """
         Set the destination of the message.
 
@@ -210,7 +212,7 @@ class Message(object):
         self._destination = value
 
     @property
-    def source(self):
+    def source(self) -> Optional[defines.ServerT]:
         """
         Return the source of the message.
 
@@ -220,7 +222,7 @@ class Message(object):
         return self._source
 
     @source.setter
-    def source(self, value):
+    def source(self, value:defines.ServerT) -> None:
         """
         Set the source of the message.
 
@@ -233,7 +235,7 @@ class Message(object):
         self._source = value
 
     @property
-    def code(self):
+    def code(self) -> int:
         """
         Return the code of the message.
 
@@ -243,7 +245,7 @@ class Message(object):
         return self._code
 
     @code.setter
-    def code(self, value):
+    def code(self, value:int) -> None:
         """
         Set the code of the message.
 
@@ -256,7 +258,7 @@ class Message(object):
         self._code = value
 
     @property
-    def acknowledged(self):
+    def acknowledged(self) -> bool:
         """
         Checks if is this message has been acknowledged.
 
@@ -265,7 +267,7 @@ class Message(object):
         return self._acknowledged
 
     @acknowledged.setter
-    def acknowledged(self, value):
+    def acknowledged(self, value:bool) -> None:
         """
         Marks this message as acknowledged.
 
@@ -280,7 +282,7 @@ class Message(object):
             self._cancelled = False
 
     @property
-    def rejected(self):
+    def rejected(self) -> bool:
         """
         Checks if this message has been rejected.
 
@@ -289,7 +291,7 @@ class Message(object):
         return self._rejected
 
     @rejected.setter
-    def rejected(self, value):
+    def rejected(self, value:bool) -> None:
         """
         Marks this message as rejected.
 
@@ -304,7 +306,7 @@ class Message(object):
             self._cancelled = True
 
     @property
-    def timeouted(self):
+    def timeouted(self) -> bool:
         """
         Checks if this message has timeouted. Confirmable messages in particular
         might timeout.
@@ -314,7 +316,7 @@ class Message(object):
         return self._timeouted
 
     @timeouted.setter
-    def timeouted(self, value):
+    def timeouted(self, value:bool) -> None:
         """
         Marks this message as timeouted. Confirmable messages in particular might
         timeout.
@@ -322,7 +324,7 @@ class Message(object):
         :type value: Boolean
         :param value:
         """
-        assert (isinstance(value, bool))
+        # assert (isinstance(value, bool))
         self._timeouted = value
         if value:
             self._acknowledged = False
@@ -330,7 +332,7 @@ class Message(object):
             self._cancelled = True
 
     @property
-    def duplicated(self):
+    def duplicated(self) -> bool:
         """
         Checks if this message is a duplicate.
 
@@ -339,25 +341,25 @@ class Message(object):
         return self._duplicated
 
     @duplicated.setter
-    def duplicated(self, value):
+    def duplicated(self, value:bool) -> None:
         """
         Marks this message as a duplicate.
 
         :type value: Boolean
         :param value: if a duplicate
         """
-        assert (isinstance(value, bool))
+        # assert (isinstance(value, bool))
         self._duplicated = value
 
     @property
-    def timestamp(self):
+    def timestamp(self) -> float:
         """
         Return the timestamp of the message.
         """
         return self._timestamp
 
     @timestamp.setter
-    def timestamp(self, value):
+    def timestamp(self, value:float) -> None:
         """
         Set the timestamp of the message.
 
@@ -366,7 +368,7 @@ class Message(object):
         """
         self._timestamp = value
 
-    def _already_in(self, option):
+    def _already_in(self, option:Option) -> bool:
         """
         Check if an option is already in the message.
 
@@ -379,7 +381,7 @@ class Message(object):
                 return True
         return False
 
-    def add_option(self, option):
+    def add_option(self, option:Option) -> None:
         """
         Add an option to the message.
 
@@ -398,18 +400,18 @@ class Message(object):
         else:
             self._options.append(option)
 
-    def del_option(self, option):
+    def del_option(self, option:Option) -> None:
         """
         Delete an option from the message
 
         :type option: Option
         :param option: the option
         """
-        assert isinstance(option, Option)
+        # assert isinstance(option, Option)
         while option in list(self._options):
             self._options.remove(option)
 
-    def del_option_by_name(self, name):
+    def del_option_by_name(self, name:str) -> None:
         """
         Delete an option from the message by name
 
@@ -417,11 +419,11 @@ class Message(object):
         :param name: option name
         """
         for o in list(self._options):
-            assert isinstance(o, Option)
+            # assert isinstance(o, Option)
             if o.name == name:
                 self._options.remove(o)
 
-    def del_option_by_number(self, number):
+    def del_option_by_number(self, number:int) -> None:
         """
         Delete an option from the message by number
 
@@ -429,26 +431,26 @@ class Message(object):
         :param number: option naumber
         """
         for o in list(self._options):
-            assert isinstance(o, Option)
+            # assert isinstance(o, Option)
             if o.number == number:
                 self._options.remove(o)
 
     @property
-    def etag(self):
+    def etag(self) -> list[bytes]:
         """
         Get the ETag option of the message.
 
         :rtype: list
         :return: the ETag values or [] if not specified by the request
         """
-        value = []
+        value:list[bytes] = []
         for option in self.options:
             if option.number == defines.OptionRegistry.ETAG.number:
-                value.append(option.value)
+                value.append(cast(bytes, option.value))
         return value
 
     @etag.setter
-    def etag(self, etag):
+    def etag(self, etag:Union[bytes,list]) -> None:
         """
         Add an ETag option to the message.
 
@@ -465,7 +467,7 @@ class Message(object):
             self.add_option(option)
 
     @etag.deleter
-    def etag(self):
+    def etag(self) -> None:
         """
         Delete an ETag from a message.
 
@@ -473,7 +475,7 @@ class Message(object):
         self.del_option_by_number(defines.OptionRegistry.ETAG.number)
 
     @property
-    def content_type(self):
+    def content_type(self) -> int:
         """
         Get the Content-Type option of a response.
 
@@ -486,7 +488,7 @@ class Message(object):
         return value
 
     @content_type.setter
-    def content_type(self, content_type):
+    def content_type(self, content_type:int) -> None:
         """
         Set the Content-Type option of a response.
 
@@ -499,7 +501,7 @@ class Message(object):
         self.add_option(option)
 
     @content_type.deleter
-    def content_type(self):
+    def content_type(self) -> None:
         """
         Delete the Content-Type option of a response.
         """
@@ -507,7 +509,7 @@ class Message(object):
         self.del_option_by_number(defines.OptionRegistry.CONTENT_TYPE.number)
 
     @property
-    def observe(self):
+    def observe(self) -> Optional[int]:
         """
         Check if the request is an observing request.
 
@@ -519,11 +521,11 @@ class Message(object):
                 #    return 0
                 if option.value is None:
                     return 0
-                return option.value
+                return cast(int, option.value)
         return None
 
     @observe.setter
-    def observe(self, ob):
+    def observe(self, ob:int) -> None:
         """
         Add the Observe option.
 
@@ -536,27 +538,27 @@ class Message(object):
         self.add_option(option)
 
     @observe.deleter
-    def observe(self):
+    def observe(self) -> None:
         """
         Delete the Observe option.
         """
         self.del_option_by_number(defines.OptionRegistry.OBSERVE.number)
 
     @property
-    def block1(self):
+    def block1(self) -> Optional[defines.BlockT]:
         """
         Get the Block1 option.
 
         :return: the Block1 value
         """
-        value = None
+        value:Optional[defines.BlockT] = None
         for option in self.options:
             if option.number == defines.OptionRegistry.BLOCK1.number:
-                value = utils.parse_blockwise(option.value)
+                value = utils.parse_blockwise(cast(int, option.value))
         return value
 
     @block1.setter
-    def block1(self, value):
+    def block1(self, value:defines.BlockT) -> None:
         """
         Set the Block1 option.
 
@@ -580,22 +582,22 @@ class Message(object):
         else:
             szx = 0
 
-        value = (num << 4)
-        value |= (m << 3)
-        value |= szx
+        v = (num << 4)
+        v |= (m << 3)
+        v |= szx
 
-        option.value = value
+        option.value = v
         self.add_option(option)
 
     @block1.deleter
-    def block1(self):
+    def block1(self) -> None:
         """
         Delete the Block1 option.
         """
         self.del_option_by_number(defines.OptionRegistry.BLOCK1.number)
 
     @property
-    def block2(self):
+    def block2(self) -> Optional[defines.BlockT]:
         """
         Get the Block2 option.
 
@@ -604,11 +606,11 @@ class Message(object):
         value = None
         for option in self.options:
             if option.number == defines.OptionRegistry.BLOCK2.number:
-                value = utils.parse_blockwise(option.value)
+                value = utils.parse_blockwise(cast(int, option.value))
         return value
 
     @block2.setter
-    def block2(self, value):
+    def block2(self, value:defines.BlockT) -> None:
         """
         Set the Block2 option.
 
@@ -632,54 +634,54 @@ class Message(object):
         else:
             szx = 0
 
-        value = (num << 4)
-        value |= (m << 3)
-        value |= szx
+        v  = (num << 4)
+        v |= (m << 3)
+        v |= szx
 
-        option.value = value
+        option.value = v
         self.add_option(option)
 
     @block2.deleter
-    def block2(self):
+    def block2(self) -> None:
         """
         Delete the Block2 option.
         """
         self.del_option_by_number(defines.OptionRegistry.BLOCK2.number)
 
     @property
-    def size1(self):
-        value = None
+    def size1(self) -> Optional[int]:
+        value:Optional[int] = None
         for option in self.options:
             if option.number == defines.OptionRegistry.SIZE1.number:
-                value = option.value if option.value is not None else 0
+                value = cast(int, option.value) if option.value is not None else 0
         return value
 
     @size1.setter
-    def size1(self, value):
+    def size1(self, value:int) -> None:
         option = Option()
         option.number = defines.OptionRegistry.SIZE1.number
         option.value = value
         self.add_option(option)
 
     @size1.deleter
-    def size1(self):
+    def size1(self) -> None:
         self.del_option_by_number(defines.OptionRegistry.SIZE1.number)
 
     @property
-    def size2(self):
+    def size2(self) -> Optional[int]:
         """
         Get the Size2 option.
 
         :return: the Size2 value
         """
-        value = None
+        value:Optional[int] = None
         for option in self.options:
             if option.number == defines.OptionRegistry.SIZE2.number:
-                value = option.value 
+                value = cast(int, option.value)
         return value
 
     @size2.setter
-    def size2(self, value):
+    def size2(self, value:int) -> None:
         """
         Set the Size2 option.
 
@@ -691,14 +693,14 @@ class Message(object):
         self.add_option(option)
 
     @size2.deleter
-    def size2(self):
+    def size2(self) -> None:
         """
         Delete the Size2 option.
         """
         self.del_option_by_number(defines.OptionRegistry.SIZE2.number)
 
     @property
-    def line_print(self):
+    def line_print(self) -> str:
         """
         Return the message as a one-line string.
 
@@ -716,24 +718,24 @@ class Message(object):
                     code=defines.Codes.LIST[self._code].name, token=token)
         for opt in self._options:
             if 'Block' in opt.name:
-                msg += "{name}: {value}, ".format(name=opt.name, value=utils.parse_blockwise(opt.value))
+                msg += f"{opt.name}: {utils.parse_blockwise(cast(int, opt.value))}, "
             else:
-                msg += "{name}: {value}, ".format(name=opt.name, value=opt.value)
+                msg += "{opt.name}: {opt.value}, "
         msg += "]"
         if self.payload is not None:
             if isinstance(self.payload, dict):
                 tmp = list(self.payload.values())[0][0:20]
             else:
                 tmp = self.payload[0:20]
-            msg += " {payload}...{length} bytes".format(payload=tmp, length=len(self.payload))
+            msg += f" {tmp!r}...{len(self.payload)} bytes"
         else:
             msg += " No payload"
         return msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.line_print
 
-    def pretty_print(self):
+    def pretty_print(self) -> str:
         """
         Return the message as a formatted string.
 

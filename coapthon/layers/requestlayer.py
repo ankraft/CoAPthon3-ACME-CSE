@@ -1,5 +1,15 @@
+from __future__ import annotations
+from typing import cast, TYPE_CHECKING
+
 from coapthon.messages.response import Response
 from coapthon import defines
+
+if TYPE_CHECKING:
+	from coapthon.messages.request import Request
+	from coapthon.resources.resource import Resource
+	from coapthon.transaction import Transaction
+	from coapthon.server.coap import CoAP
+	from coapthon.client.coap import CoAP as CoAPClient
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -8,10 +18,10 @@ class RequestLayer(object):
     """
     Class to handle the Request/Response layer
     """
-    def __init__(self, server):
+    def __init__(self, server:CoAP|CoAPClient):
         self._server = server
 
-    def receive_request(self, transaction):
+    def receive_request(self, transaction:Transaction) -> Transaction:
         """
         Handle request and execute the requested method
 
@@ -33,7 +43,7 @@ class RequestLayer(object):
             transaction.response = None
         return transaction
 
-    def send_request(self, request):
+    def send_request(self, request:Request)	-> Request:
         """
          Dummy function. Used to do not broke the layered architecture.
 
@@ -43,7 +53,7 @@ class RequestLayer(object):
         """
         return request
 
-    def _handle_get(self, transaction):
+    def _handle_get(self, transaction:Transaction) -> Transaction:
         """
         Handle GET requests
 
@@ -52,16 +62,16 @@ class RequestLayer(object):
         :rtype : Transaction
         :return: the edited transaction with the response to the request
         """
-        wkc_resource_is_defined = defines.DISCOVERY_URL in self._server.root
+        wkc_resource_is_defined = defines.DISCOVERY_URL in self._server.root # type:ignore[union-attr]
         path = str("/" + transaction.request.uri_path)
         transaction.response = Response()
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
         if path == defines.DISCOVERY_URL and not wkc_resource_is_defined:
-            transaction = self._server.resourceLayer.discover(transaction)
+            transaction = self._server.resourceLayer.discover(transaction) # type:ignore[union-attr]
         else:
             try:
-                resource = self._server.root[path]
+                resource = cast(Resource, self._server.root[path]) # type:ignore[union-attr]
             except KeyError:
                 resource = None
             if resource is None or path == '/':
@@ -69,10 +79,10 @@ class RequestLayer(object):
                 transaction.response.code = defines.Codes.NOT_FOUND.number
             else:
                 transaction.resource = resource
-                transaction = self._server.resourceLayer.get_resource(transaction)
+                transaction = self._server.resourceLayer.get_resource(transaction) # type:ignore[union-attr]
         return transaction
 
-    def _handle_put(self, transaction):
+    def _handle_put(self, transaction:Transaction) -> Transaction:
         """
         Handle PUT requests
 
@@ -86,7 +96,7 @@ class RequestLayer(object):
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
         try:
-            resource = self._server.root[path]
+            resource = cast(Resource, self._server.root[path]) # type:ignore[union-attr]
         except KeyError:
             resource = None
         if resource is None:
@@ -94,10 +104,10 @@ class RequestLayer(object):
         else:
             transaction.resource = resource
             # Update request
-            transaction = self._server.resourceLayer.update_resource(transaction)
+            transaction = self._server.resourceLayer.update_resource(transaction) # type:ignore[union-attr]
         return transaction
 
-    def _handle_post(self, transaction):
+    def _handle_post(self, transaction:Transaction) -> Transaction:
         """
         Handle POST requests
 
@@ -112,10 +122,10 @@ class RequestLayer(object):
         transaction.response.token = transaction.request.token
 
         # Create request
-        transaction = self._server.resourceLayer.create_resource(path, transaction)
+        transaction = self._server.resourceLayer.create_resource(path, transaction) # type:ignore[union-attr]
         return transaction
 
-    def _handle_delete(self, transaction):
+    def _handle_delete(self, transaction:Transaction) -> Transaction:
         """
         Handle DELETE requests
 
@@ -129,7 +139,7 @@ class RequestLayer(object):
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
         try:
-            resource = self._server.root[path]
+            resource = cast(Resource, self._server.root[path]) # type:ignore[union-attr]
         except KeyError:
             resource = None
 
@@ -138,6 +148,6 @@ class RequestLayer(object):
         else:
             # Delete
             transaction.resource = resource
-            transaction = self._server.resourceLayer.delete_resource(transaction, path)
+            transaction = self._server.resourceLayer.delete_resource(transaction, path) # type:ignore[union-attr]
         return transaction
 

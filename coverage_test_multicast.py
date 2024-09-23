@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Tuple
+
 from queue import Queue
 import random
 import threading
@@ -18,21 +21,21 @@ __version__ = "2.0"
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.server_address = (defines.ALL_COAP_NODES, 5683)
         self.current_mid = random.randint(1, 1000)
         self.server_mid = random.randint(1000, 2000)
         self.server = CoAPServer("0.0.0.0", 5683, multicast=True)
         self.server_thread = threading.Thread(target=self.server.listen, args=(1,))
         self.server_thread.start()
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.server.close()
         self.server_thread.join(timeout=25)
         self.server = None
 
-    def _test_with_client(self, message_list):  # pragma: no cover
+    def _test_with_client(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -58,7 +61,7 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def _test_with_client_observe(self, message_list):  # pragma: no cover
+    def _test_with_client_observe(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -85,11 +88,11 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def client_callback(self, response):
+    def client_callback(self, response:Response) -> None:
         print("Callback")
         self.queue.put(response)
 
-    def test_not_allowed(self):
+    def test_not_allowed(self) -> None:
         print("TEST_NOT_ALLOWED")
         path = "/void"
 

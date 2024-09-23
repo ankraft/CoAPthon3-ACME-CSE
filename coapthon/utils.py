@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Tuple, Union, TYPE_CHECKING
+
 import binascii
 import random
-import string
+
+from coapthon import defines
+if TYPE_CHECKING:
+	from coapthon.messages.option import Option
 
 __author__ = 'Giacomo Tanganelli'
 
 
-def str_append_hash(*args):
-    """ Convert each argument to a lower case string, appended, then hash """
+def str_append_hash(*args:Union[str, int, bytes]) -> int:
     ret_hash = ""
     for i in args:
         if isinstance(i, (str, int)):
@@ -19,7 +24,7 @@ def str_append_hash(*args):
     return hash(ret_hash)
 
 
-def check_nocachekey(option):
+def check_nocachekey(option:Option) -> bool:
     """
     checks if an option is a NoCacheKey option or Etag
 
@@ -29,47 +34,45 @@ def check_nocachekey(option):
     return ((option.number & 0x1E) == 0x1C) | (option.number == 4)
 
 
-def check_code(code):
+def check_code(code:int) -> None:
     """
     checks if the response code is one of the valid ones defined in the rfc
 
     :param code:
     :return:
     """
-    if (65 <= code <= 69) or (128 <= code <= 134) or (code == 140) or (code == 141) or (code == 143) or (
-            160 <= code <= 165):
+    if (65 <= code <= 69) or (128 <= code <= 134) or (code == 140) or (code == 141) or (code == 143) or (160 <= code <= 165):
         return
 
     else:
-        raise InvalidResponseCode
+        raise InvalidResponseCode(code)
 
 """
 exception used to signal an invalid response code
 """
 
 
-class InvalidResponseCode:
-    def __init__(self, code):
+class InvalidResponseCode(Exception):
+    
+    def __init__(self, code:int) -> None:
         self.inv_code = code
 
 
-def is_uri_option(number):
+def is_uri_option(number:int) -> bool:
     """
     checks if the option is part of uri-path, uri-host, uri-port, uri-query
 
     :param number:
     :return:
     """
-    if number == 3 | number == 7 | number == 11 | number == 15:
-        return True
-    return False
+    return number in (3, 8, 11, 15)
 
 
-def generate_random_token(size):
+def generate_random_token(size:int) -> bytes:
     return bytes([random.randint(0, 255) for _ in range(size)])
 
 
-def parse_blockwise(value):
+def parse_blockwise(value:int) -> defines.BlockT:
     """
     Parse Blockwise option.
 
@@ -99,7 +102,7 @@ def parse_blockwise(value):
     return num, int(m), pow(2, (size + 4))
 
 
-def byte_len(int_type):
+def byte_len(int_type:int) -> int:
     """
     Get the number of byte needed to encode the int passed.
 
@@ -118,7 +121,7 @@ def byte_len(int_type):
     return length
 
 
-def parse_uri(uri):
+def parse_uri(uri:str) -> Tuple[str, int, str]:
     t = uri.split("://")
     tmp = t[1]
     t = tmp.split("/", 1)
@@ -140,7 +143,7 @@ def parse_uri(uri):
     return str(host), port, path
 
 
-def create_logging():  # pragma: no cover
+def create_logging() -> None:  # pragma: no cover
     with open("logging.conf", "w") as f:
         f.writelines("[loggers]\n")
         f.writelines("keys=root\n\n")
@@ -162,10 +165,10 @@ def create_logging():  # pragma: no cover
 
 
 class Tree(object):
-    def __init__(self):
-        self.tree = {}
+    def __init__(self) -> None:
+        self.tree:dict = {}
 
-    def dump(self):
+    def dump(self) -> list:
         """
         Get all the paths registered in the server.
 
@@ -173,7 +176,7 @@ class Tree(object):
         """
         return sorted(list(self.tree.keys()))
 
-    def with_prefix(self, path):
+    def with_prefix(self, path:str) -> list:
         ret = []
         for key in list(self.tree.keys()):
             if path.startswith(key):
@@ -183,7 +186,7 @@ class Tree(object):
             return ret
         raise KeyError
 
-    def with_prefix_resource(self, path):
+    def with_prefix_resource(self, path:str) -> list:
         ret = []
         for key, value in self.tree.items():
             if path.startswith(key):
@@ -193,14 +196,14 @@ class Tree(object):
             return ret
         raise KeyError
 
-    def __getitem__(self, item):
+    def __getitem__(self, item:str) -> object:
         return self.tree[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key:str, value:object) -> None:
         self.tree[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key:str) -> None:
         del self.tree[key]
 
-    def __contains__(self, item):
+    def __contains__(self, item:str) -> bool:
         return item in self.tree

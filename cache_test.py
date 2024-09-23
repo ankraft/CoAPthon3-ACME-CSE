@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Tuple
 from queue import Queue
 import random
 import threading
@@ -18,7 +20,7 @@ __version__ = "1.0"
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.server_address = ("127.0.0.1", 5683)
         self.current_mid = random.randint(1, 1000)
         self.server_mid = random.randint(1000, 2000)
@@ -28,9 +30,9 @@ class Tests(unittest.TestCase):
         self.proxy = CoAPForwardProxy("127.0.0.1", 5683, cache=True)
         self.proxy_thread = threading.Thread(target=self.proxy.listen, args=(1,))
         self.proxy_thread.start()
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.server.close()
         self.server_thread.join(timeout=25)
         self.server = None
@@ -38,7 +40,7 @@ class Tests(unittest.TestCase):
         self.proxy_thread.join(timeout=25)
         self.proxy = None
 
-    def _test_with_client_delayed(self, message_list):  # pragma: no cover
+    def _test_with_client_delayed(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -74,11 +76,11 @@ class Tests(unittest.TestCase):
                             self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def client_callback(self, response):
+    def client_callback(self, response:Response) -> None:
         print("Callback")
         self.queue.put(response)
 
-    def test_get_multiple(self):
+    def test_get_multiple(self) -> None:
         print("TEST_GET_MULTIPLE")
         path = "/basic"
         req = Request()
@@ -94,7 +96,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Basic Resource"
+        expected.payload = bytes("Basic Resource", "utf-8")
 
         exchange1 = (req, expected)
 
@@ -114,14 +116,14 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Basic Resource"
+        expected.payload = bytes("Basic Resource", "utf-8")
         expected.max_age = 61
 
         exchange2 = (req2, expected)
 
         self._test_with_client_delayed([exchange1, exchange2])
 
-    def test_get_post(self):
+    def test_get_post(self) -> None:
         print("TEST_GET_POST")
         path = "/basic"
         req = Request()
@@ -131,7 +133,7 @@ class Tests(unittest.TestCase):
         req._mid = self.current_mid
         req.destination = self.server_address
         req.proxy_uri = "coap://127.0.0.1:5684/storage/new"
-        req.payload = "Hello"
+        req.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -158,7 +160,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
 
         exchange2 = (req2, expected)
 
@@ -172,7 +174,7 @@ class Tests(unittest.TestCase):
         req3._mid = self.current_mid
         req3.destination = self.server_address
         req3.proxy_uri = "coap://127.0.0.1:5684/storage/new"
-        req3.payload = "Hello"
+        req3.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -199,7 +201,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
 
         exchange4 = (req4, expected)
 
@@ -207,7 +209,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client_delayed([exchange1, exchange2, exchange3, exchange4])
 
-    def test_get_put(self):
+    def test_get_put(self) -> None:
         print("TEST_GET_PUT")
         path = "/basic"
         req = Request()
@@ -217,7 +219,7 @@ class Tests(unittest.TestCase):
         req._mid = self.current_mid
         req.destination = self.server_address
         req.proxy_uri = "coap://127.0.0.1:5684/storage/new"
-        req.payload = "Hello"
+        req.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -244,7 +246,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
 
         exchange2 = (req2, expected)
 
@@ -258,7 +260,7 @@ class Tests(unittest.TestCase):
         req3._mid = self.current_mid
         req3.destination = self.server_address
         req3.proxy_uri = "coap://127.0.0.1:5684/storage/new"
-        req3.payload = "Hello"
+        req3.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -285,7 +287,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
 
         exchange4 = (req4, expected)
 
@@ -293,7 +295,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client_delayed([exchange1, exchange2, exchange3, exchange4])
 
-    def test_get_delete(self):
+    def test_get_delete(self) -> None:
         print("TEST_GET_DELETE")
         path = "/basic"
 
@@ -323,7 +325,7 @@ class Tests(unittest.TestCase):
         req._mid = self.current_mid
         req.destination = self.server_address
         req.proxy_uri = "coap://127.0.0.1:5684/storage/new"
-        req.payload = "Hello"
+        req.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -350,7 +352,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
 
         exchange2 = (req2, expected)
 
@@ -397,7 +399,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client_delayed([exchange0, exchange1, exchange2, exchange3, exchange4])
 
-    def test_get_etag(self):
+    def test_get_etag(self) -> None:
         print("TEST_GET_ETAG")
         path = "/etag"
         req = Request()
@@ -449,7 +451,7 @@ class Tests(unittest.TestCase):
         req3._mid = self.current_mid
         req3.destination = self.server_address
         req3.proxy_uri = "coap://127.0.0.1:5684/etag"
-        req3.payload = "Hello"
+        req3.payload = bytes("Hello", "utf-8")
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -477,7 +479,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Hello"
+        expected.payload = bytes("Hello", "utf-8")
         expected.etag = str(1)
 
         exchange4 = (req4, expected)

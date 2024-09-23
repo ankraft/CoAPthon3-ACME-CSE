@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+from typing import Tuple
+
 from queue import Queue
 import random
 import socket
@@ -14,70 +17,72 @@ from coapthon.messages.option import Option
 from coapthon.messages.request import Request
 from coapthon.messages.response import Response
 from coapthon.serializer import Serializer
+from coapthon import defines
 
 __author__ = 'Giacomo Tanganelli'
 __version__ = "2.0"
 
-PAYLOAD = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut " \
-          "labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et " \
-          "ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum " \
-          "dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore " \
-          "magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. " \
-          "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit " \
-          "amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna " \
-          "aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita " \
-          "kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. " \
-          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore " \
-          "eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum " \
-          "zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer " \
-          "adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. " \
-          "Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip " \
-          "ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie " \
-          "consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim " \
-          "qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. " \
-          "Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat " \
-          "facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh " \
-          "euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis " \
-          "nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. " \
-          "Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore " \
-          "eu feugiat nulla facilisis. " \
-          "At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata " \
-          "sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam " \
-          "nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et " \
-          "accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem " \
-          "ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, At accusam aliquyam diam " \
-          "diam dolore dolores duo eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet clita ea " \
-          "et gubergren, kasd magna no rebum. sanctus sea sed takimata ut vero voluptua. est Lorem ipsum dolor " \
-          "sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor " \
-          "invidunt ut labore et dolore magna aliquyam erat. " \
-          "Consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna " \
-          "aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita " \
-          "kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, " \
-          "consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam " \
-          "erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd " \
-          "gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, " \
-          "consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam " \
-          "erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd " \
-          "gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
+PAYLOAD = b"""\
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut \
+labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et \
+ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum \
+dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore \
+magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. \
+Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit \
+amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna \
+aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita \
+kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. \
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore \
+eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum \
+zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer \
+adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. \
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip \
+ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie \
+consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim \
+qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. \
+Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat \
+facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh \
+euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis \
+nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. \
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore \
+eu feugiat nulla facilisis. \
+At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata \
+sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam \
+nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et \
+accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem \
+ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, At accusam aliquyam diam \
+diam dolore dolores duo eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet clita ea \
+et gubergren, kasd magna no rebum. sanctus sea sed takimata ut vero voluptua. est Lorem ipsum dolor \
+sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor \
+invidunt ut labore et dolore magna aliquyam erat. \
+Consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna \
+aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita \
+kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, \
+consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam \
+erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd \
+gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, \
+consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam \
+erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd \
+gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."""
 
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
-        self.server_address = ("127.0.0.1", 5683)
-        self.current_mid = random.randint(1, 1000)
-        self.server_mid = random.randint(1000, 2000)
-        self.server = CoAPServer("127.0.0.1", 5683)
-        self.server_thread = threading.Thread(target=self.server.listen, args=(1,))
+    def setUp(self) -> None:
+        self.server_address:defines.ServerT = ("127.0.0.1", 5683)
+        self.current_mid:int = random.randint(1, 1000)
+        self.server_mid:int = random.randint(1000, 2000)
+        self.server:CoAPServer = CoAPServer("127.0.0.1", 5683)
+        self.server_thread:threading.Thread = threading.Thread(target=self.server.listen, args=(1,))
         self.server_thread.start()
-        self.queue = Queue()
+        self.queue:Queue = Queue()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.server.close()
         self.server_thread.join(timeout=25)
         self.server = None
 
-    def _test_with_client(self, message_list):  # pragma: no cover
+    def _test_with_client(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -104,7 +109,7 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def _test_with_client_observe(self, message_list):  # pragma: no cover
+    def _test_with_client_observe(self, message_list:list[Tuple[Request, Response]]) -> None:  # pragma: no cover
         client = HelperClient(self.server_address)
         for message, expected in message_list:
             if message is not None:
@@ -131,11 +136,11 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         client.stop()
 
-    def client_callback(self, response):
+    def client_callback(self, response:Response) -> None:
         print("Callback")
         self.queue.put(response)
 
-    def _test_plugtest(self, message_list):  # pragma: no cover
+    def _test_plugtest(self, message_list:list[Tuple[Message, Response]]) -> None:  # pragma: no cover
         serializer = Serializer()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for message, expected in message_list:
@@ -165,7 +170,7 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         sock.close()
 
-    def _test_datagram(self, message_list):  # pragma: no cover
+    def _test_datagram(self, message_list:list[Tuple[Tuple[bytes, defines.ServerT], Response]]) -> None:  # pragma: no cover
         serializer = Serializer()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for message, expected in message_list:
@@ -195,7 +200,7 @@ class Tests(unittest.TestCase):
                         self.assertEqual(option_value, option_value_rec)
         sock.close()
 
-    def test_not_allowed(self):
+    def test_not_allowed(self) -> None:
         print("TEST_NOT_ALLOWED")
         path = "/void"
         req = Request()
@@ -267,7 +272,7 @@ class Tests(unittest.TestCase):
         self.current_mid += 1
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_separate(self):
+    def test_separate(self) -> None:
         print("TEST_SEPARATE")
         path = "/separate"
 
@@ -294,7 +299,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "POST"
+        req.payload = b"POST"
 
         expected = Response()
         expected.type = defines.Types["CON"]
@@ -312,7 +317,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "PUT"
+        req.payload = b"PUT"
 
         expected = Response()
         expected.type = defines.Types["CON"]
@@ -342,7 +347,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_post(self):
+    def test_post(self) -> None:
         print("TEST_POST")
         path = "/storage/new_res?id=1"
 
@@ -352,7 +357,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "test"
+        req.payload = b"test"
         req.add_if_none_match()
 
         expected = Response()
@@ -362,7 +367,7 @@ class Tests(unittest.TestCase):
         expected.token = None
         expected.payload = None
         expected.location_path = "storage/new_res"
-        expected.location_query = "id=1"
+        expected.location_query = "id=1"	# type: ignore
 
         exchange1 = (req, expected)
         self.current_mid += 1
@@ -373,14 +378,14 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.if_match = ["test", "not"]
+        req.if_match = [b"test", b"not"]
 
         expected = Response()
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "test"
+        expected.payload = b"test"
 
         exchange2 = (req, expected)
         self.current_mid += 1
@@ -391,8 +396,8 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.if_match = ["not"]
-        req.payload = "not"
+        req.if_match = [b"not"]
+        req.payload = b"not"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -409,8 +414,8 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.if_match = ["not"]
-        req.payload = "not"
+        req.if_match = [b"not"]
+        req.payload = b"not"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -427,7 +432,7 @@ class Tests(unittest.TestCase):
         req._mid = self.current_mid
         req.destination = self.server_address
         req.add_if_none_match()
-        req.payload = "not"
+        req.payload = b"not"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -440,7 +445,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4, exchange5])
 
-    def test_post_block(self):
+    def test_post_block(self) -> None:
         print("TEST_POST_BLOCK")
         path = "/storage/new_res"
         req = Request()
@@ -544,7 +549,7 @@ class Tests(unittest.TestCase):
 
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5])
 
-    def test_get_block(self):
+    def test_get_block(self) -> None:
         print("TEST_GET_BLOCK")
         path = "/big"
 
@@ -740,7 +745,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange0, exchange1, exchange2, exchange3, exchange4,
                              exchange5, exchange6, exchange7, exchange8])
 
-    def test_post_block_big(self):
+    def test_post_block_big(self) -> None:
         print("TEST_POST_BLOCK_BIG")
         path = "/big"
         req = Request()
@@ -885,7 +890,7 @@ class Tests(unittest.TestCase):
 
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5, exchange6, exchange7])
 
-    def test_options(self):
+    def test_options(self) -> None:
         print("TEST_OPTIONS")
         path = "/storage/new_res"
 
@@ -900,7 +905,7 @@ class Tests(unittest.TestCase):
         option.value = "test"
         req.add_option(option)
         req.del_option(option)
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -924,7 +929,7 @@ class Tests(unittest.TestCase):
         option.value = "test"
         req.add_option(option)
         req.del_option_by_name("ETag")
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -948,7 +953,7 @@ class Tests(unittest.TestCase):
         option.value = "test"
         req.add_option(option)
         del req.etag
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -963,7 +968,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3])
 
-    def test_long_options(self):
+    def test_long_options(self) -> None:
         """
         Test processing of options with extended length
         """
@@ -982,7 +987,7 @@ class Tests(unittest.TestCase):
         option.number = defines.OptionRegistry.RM_MESSAGE_SWITCHING.number
         option.value = b'\1\1\1\1\0\0'
         req.add_option(option)
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -996,7 +1001,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1])
 
         # This option (244) should be silently ignored by the server
-        req = (b'\x40\x01\x01\x01\xd6\xe7\x01\x01\x01\x01\x00\x00', self.server_address)
+        req2 = (b'\x40\x01\x01\x01\xd6\xe7\x01\x01\x01\x01\x00\x00', self.server_address)
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1005,34 +1010,34 @@ class Tests(unittest.TestCase):
         expected.token = None
         expected.payload = None
 
-        exchange21 = (req, expected)
+        exchange21 = (req2, expected)
         self.current_mid += 1
 
         # This option (245) should cause BAD REQUEST, as unrecognizable critical
-        req = (b'\x40\x01\x01\x01\xd6\xe8\x01\x01\x01\x01\x00\x00', self.server_address)
+        req2 = (b'\x40\x01\x01\x01\xd6\xe8\x01\x01\x01\x01\x00\x00', self.server_address)
 
         expected = Response()
         expected.type = defines.Types["RST"]
         expected._mid = None
         expected.code = defines.Codes.BAD_REQUEST.number
 
-        exchange22 = (req, expected)
+        exchange22 = (req2, expected)
         self.current_mid += 1
 
         # This option (65525) should cause BAD REQUEST, as unrecognizable critical
-        req = (b'\x40\x01\x01\x01\xe6\xfe\xe8\x01\x01\x01\x01\x00\x00', self.server_address)
+        req2 = (b'\x40\x01\x01\x01\xe6\xfe\xe8\x01\x01\x01\x01\x00\x00', self.server_address)
 
         expected = Response()
         expected.type = defines.Types["RST"]
         expected._mid = None
         expected.code = defines.Codes.BAD_REQUEST.number
 
-        exchange23 = (req, expected)
+        exchange23 = (req2, expected)
         self.current_mid += 1
 
         self._test_datagram([exchange21, exchange22, exchange23])
 
-    def test_content_type(self):
+    def test_content_type(self) -> None:
         print("TEST_CONTENT_TYPE")
         path = "/storage/new_res"
 
@@ -1042,7 +1047,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = b"<value>test</value>"
         req.content_type = defines.Content_types["application/xml"]
 
         expected = Response()
@@ -1068,7 +1073,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Basic Resource"
+        expected.payload = b"Basic Resource"
 
         exchange2 = (req, expected)
         self.current_mid += 1
@@ -1079,7 +1084,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1103,7 +1108,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "test"
+        expected.payload = b"test"
 
         exchange4 = (req, expected)
         self.current_mid += 1
@@ -1121,7 +1126,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "<value>test</value>"
+        expected.payload = b"<value>test</value>"
         expected.content_type = defines.Content_types["application/xml"]
 
         exchange5 = (req, expected)
@@ -1157,7 +1162,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "<value>0</value>"
+        expected.payload = b"<value>0</value>"
 
         print(expected.pretty_print())
 
@@ -1176,7 +1181,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "0"
+        expected.payload =b"0"
 
         exchange8 = (req, expected)
         self.current_mid += 1
@@ -1194,7 +1199,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "<value>0</value>"
+        expected.payload = b"<value>0</value>"
         expected.content_type = defines.Content_types["application/xml"]
 
         exchange9 = (req, expected)
@@ -1213,7 +1218,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "{'value': '0'}"
+        expected.payload = b"{'value': '0'}"
         expected.content_type = defines.Content_types["application/json"]
 
         exchange10 = (req, expected)
@@ -1222,7 +1227,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4, exchange5,
                                 exchange6, exchange7, exchange8, exchange9, exchange10])
 
-    def test_ETAG(self):
+    def test_ETAG(self) -> None:
         print("TEST_ETAG")
         path = "/etag"
 
@@ -1238,7 +1243,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "ETag resource"
+        expected.payload = b"ETag resource"
         expected.etag = bytes("0", "utf-8")
 
         exchange1 = (req, expected)
@@ -1250,7 +1255,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1276,7 +1281,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.VALID.number
         expected.token = None
-        expected.payload = "test"
+        expected.payload = b"test"
         expected.etag = bytes("1", "utf-8")
 
         exchange3 = (req, expected)
@@ -1288,7 +1293,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "echo payload"
+        req.payload = b"echo payload"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1302,7 +1307,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_child(self):
+    def test_child(self) -> None:
         print("TEST_CHILD")
         path = "/child"
 
@@ -1312,7 +1317,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1337,7 +1342,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "test"
+        expected.payload = b"test"
 
         exchange2 = (req, expected)
         self.current_mid += 1
@@ -1348,7 +1353,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "testPUT"
+        req.payload = b"testPUT"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1379,7 +1384,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_not_found(self):
+    def test_not_found(self) -> None:
         print("TEST_not_found")
         path = "/not_found"
 
@@ -1389,13 +1394,13 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.token = 100
+        req.token = bytes(100)
 
         expected = Response()
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.NOT_FOUND.number
-        expected.token = 100
+        expected.token = bytes(100)
         expected.payload = None
 
         exchange1 = (req, expected)
@@ -1407,7 +1412,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "test"
+        req.payload = b"test"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1424,7 +1429,7 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "testPUT"
+        req.payload = b"testPUT"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1455,7 +1460,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
-    def test_invalid(self):
+    def test_invalid(self) -> None:
         print("TEST_INVALID")
 
         # version
@@ -1510,7 +1515,7 @@ class Tests(unittest.TestCase):
 
         self._test_datagram([exchange1, exchange2, exchange3, exchange4, exchange5])
 
-    def test_post_block_big_client(self):
+    def test_post_block_big_client(self) -> None:
         print("TEST_POST_BLOCK_BIG_CLIENT")
         path = "/big"
         req = Request()
@@ -1520,29 +1525,30 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sollicitudin fermentum ornare. " \
-                       "Cras accumsan tellus quis dui lacinia eleifend. Proin ultrices rutrum orci vitae luctus. " \
-                       "Nullam malesuada pretium elit, at aliquam odio vehicula in. Etiam nec maximus elit. " \
-                       "Etiam at erat ac ex ornare feugiat. Curabitur sed malesuada orci, id aliquet nunc. Phasellus " \
-                       "nec leo luctus, blandit lorem sit amet, interdum metus. Duis efficitur volutpat magna, ac " \
-                       "ultricies nibh aliquet sit amet. Etiam tempor egestas augue in hendrerit. Nunc eget augue " \
-                       "ultricies, dignissim lacus et, vulputate dolor. Nulla eros odio, fringilla vel massa ut, " \
-                       "facilisis cursus quam. Fusce faucibus lobortis congue. Fusce consectetur porta neque, id " \
-                       "sollicitudin velit maximus eu. Sed pharetra leo quam, vel finibus turpis cursus ac. " \
-                       "Aenean ac nisi massa. Cras commodo arcu nec ante tristique ullamcorper. Quisque eu hendrerit" \
-                       " urna. Cras fringilla eros ut nunc maximus, non porta nisl mollis. Aliquam in rutrum massa." \
-                       " Praesent tristique turpis dui, at ultricies lorem fermentum at. Vivamus sit amet ornare neque, " \
-                       "a imperdiet nisl. Quisque a iaculis libero, id tempus lacus. Aenean convallis est non justo " \
-                       "consectetur, a hendrerit enim consequat. In accumsan ante a egestas luctus. Etiam quis neque " \
-                       "nec eros vestibulum faucibus. Nunc viverra ipsum lectus, vel scelerisque dui dictum a. Ut orci " \
-                       "enim, ultrices a ultrices nec, pharetra in quam. Donec accumsan sit amet eros eget fermentum." \
-                       "Vivamus ut odio ac odio malesuada accumsan. Aenean vehicula diam at tempus ornare. Phasellus " \
-                       "dictum mauris a mi consequat, vitae mattis nulla fringilla. Ut laoreet tellus in nisl efficitur," \
-                       " a luctus justo tempus. Fusce finibus libero eget velit finibus iaculis. Morbi rhoncus purus " \
-                       "vel vestibulum ullamcorper. Sed ac metus in urna fermentum feugiat. Nulla nunc diam, sodales " \
-                       "aliquam mi id, varius porta nisl. Praesent vel nibh ac turpis rutrum laoreet at non odio. " \
-                       "Phasellus ut posuere mi. Suspendisse malesuada velit nec mauris convallis porta. Vivamus " \
-                       "sed ultrices sapien, at cras amet."
+        req.payload = b"""\
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sollicitudin fermentum ornare. \
+Cras accumsan tellus quis dui lacinia eleifend. Proin ultrices rutrum orci vitae luctus. \
+Nullam malesuada pretium elit, at aliquam odio vehicula in. Etiam nec maximus elit. \
+Etiam at erat ac ex ornare feugiat. Curabitur sed malesuada orci, id aliquet nunc. Phasellus \
+nec leo luctus, blandit lorem sit amet, interdum metus. Duis efficitur volutpat magna, ac \
+ultricies nibh aliquet sit amet. Etiam tempor egestas augue in hendrerit. Nunc eget augue \
+ultricies, dignissim lacus et, vulputate dolor. Nulla eros odio, fringilla vel massa ut, \
+facilisis cursus quam. Fusce faucibus lobortis congue. Fusce consectetur porta neque, id \
+sollicitudin velit maximus eu. Sed pharetra leo quam, vel finibus turpis cursus ac. \
+Aenean ac nisi massa. Cras commodo arcu nec ante tristique ullamcorper. Quisque eu hendrerit\
+ urna. Cras fringilla eros ut nunc maximus, non porta nisl mollis. Aliquam in rutrum massa.\
+ Praesent tristique turpis dui, at ultricies lorem fermentum at. Vivamus sit amet ornare neque, \
+a imperdiet nisl. Quisque a iaculis libero, id tempus lacus. Aenean convallis est non justo \
+consectetur, a hendrerit enim consequat. In accumsan ante a egestas luctus. Etiam quis neque \
+nec eros vestibulum faucibus. Nunc viverra ipsum lectus, vel scelerisque dui dictum a. Ut orci \
+enim, ultrices a ultrices nec, pharetra in quam. Donec accumsan sit amet eros eget fermentum.\
+Vivamus ut odio ac odio malesuada accumsan. Aenean vehicula diam at tempus ornare. Phasellus \
+dictum mauris a mi consequat, vitae mattis nulla fringilla. Ut laoreet tellus in nisl efficitur,\
+ a luctus justo tempus. Fusce finibus libero eget velit finibus iaculis. Morbi rhoncus purus \
+vel vestibulum ullamcorper. Sed ac metus in urna fermentum feugiat. Nulla nunc diam, sodales \
+aliquam mi id, varius porta nisl. Praesent vel nibh ac turpis rutrum laoreet at non odio. \
+Phasellus ut posuere mi. Suspendisse malesuada velit nec mauris convallis porta. Vivamus \
+sed ultrices sapien, at cras amet."""
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -1556,7 +1562,7 @@ class Tests(unittest.TestCase):
 
         self._test_with_client([exchange1])
 
-    def test_observe_client(self):
+    def test_observe_client(self) -> None:
         print("TEST_OBSERVE_CLIENT")
         path = "/basic"
 
@@ -1578,7 +1584,7 @@ class Tests(unittest.TestCase):
 
         exchange1 = (req, expected)
 
-        req = Message()
+        req = Request()
         req.code = defines.Codes.EMPTY.number
         req.uri_path = path
         req.type = defines.Types["RST"]

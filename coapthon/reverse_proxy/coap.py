@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Optional, Tuple
+
 import logging
 import random
 import socket
@@ -15,10 +18,12 @@ from coapthon.layers.forwardLayer import ForwardLayer
 from coapthon.layers.messagelayer import MessageLayer
 from coapthon.layers.observelayer import ObserveLayer
 from coapthon.layers.resourcelayer import ResourceLayer
+from coapthon.transaction import Transaction
 from coapthon.messages.message import Message
 from coapthon.messages.request import Request
 from coapthon.resources.remoteResource import RemoteResource
 from coapthon.resources.resource import Resource
+from coapthon.messages.response import Response
 from coapthon.serializer import Serializer
 from coapthon.utils import Tree
 
@@ -32,7 +37,7 @@ class CoAP(object):
     """
     Implementation of the Reverse Proxy
     """
-    def __init__(self, server_address, xml_file, multicast=False, starting_mid=None, cache=False, sock=None):
+    def __init__(self, server_address:defines.ServerT, xml_file:Optional[str], multicast:Optional[bool]=False, starting_mid:Optional[int]=None, cache:Optional[bool]=False, sock:Optional[socket.socket]=None) -> None:
         """
         Initialize the Reverse Proxy.
 
@@ -45,9 +50,9 @@ class CoAP(object):
         """
         self.stopped = threading.Event()
         self.stopped.clear()
-        self.to_be_stopped = []
-        self.purge = threading.Thread(target=self.purge)
-        self.purge.start()
+        self.to_be_stopped:list[threading.Event] = []
+        self.purgeThread = threading.Thread(target=self.purge)
+        self.purgeThread.start()
 
         self._messageLayer = MessageLayer(starting_mid)
         self._blockLayer = BlockLayer()
@@ -71,7 +76,7 @@ class CoAP(object):
         self.server_address = server_address
         self.multicast = multicast
         self.file_xml = xml_file
-        self._mapping = {}
+        self._mapping:dict[str, defines.ServerT] = {}
 
         addrinfo = socket.getaddrinfo(self.server_address[0], None)[0]
 
@@ -127,7 +132,7 @@ class CoAP(object):
 
             self.parse_config()
 
-    def parse_config(self):
+    def parse_config(self) -> None:
         """
         Parse the xml file with remote servers and discover resources on each found server.
         """
@@ -138,7 +143,7 @@ class CoAP(object):
             name = server.get("name")
             self.discover_remote(destination, name)
 
-    def discover_remote(self, destination, name):
+    def discover_remote(self, destination:str, name:str) -> None:
         """
         Discover resources on remote servers.
 
@@ -162,7 +167,7 @@ class CoAP(object):
         client.stop()
         self.discover_remote_results(response, name)
 
-    def discover_remote_results(self, response, name):
+    def discover_remote_results(self, response:Response, name:str) -> None:
         """
         Create a new remote server resource for each valid discover response.
 
@@ -176,11 +181,11 @@ class CoAP(object):
                                       coap_server=self, visible=True, observable=False, allow_children=True)
             self.add_resource(name, resource)
             self._mapping[name] = (host, port)
-            self.parse_core_link_format(response.payload, name, (host, port))
+            self.parse_core_link_format(str(response.payload), name, (host, port))
         else:
-            logger.error("Server: " + response.source + " isn't valid.")
+            logger.error(f"Server: {response.source} isn't valid.")
 
-    def parse_core_link_format(self, link_format, base_path, remote_server):
+    def parse_core_link_format(self, link_format:str, base_path:str, remote_server:defines.ServerT) -> None:
         """
         Parse discovery results.
 
@@ -200,8 +205,7 @@ class CoAP(object):
             attributes = result.group(0)
             dict_att = {}
             if len(attributes) > 0:
-                attributes = attributes.split(";")
-                for att in attributes:
+                for att in attributes.split(";"):
                     a = att.split("=")
                     if len(a) > 1:
                         dict_att[a[0]] = a[1]
@@ -216,7 +220,7 @@ class CoAP(object):
 
         logger.debug(self.root.dump())
 
-    def purge(self):
+    def purge(self) -> None:
         """
         Clean old transactions
         """
@@ -224,7 +228,7 @@ class CoAP(object):
             self.stopped.wait(timeout=defines.EXCHANGE_LIFETIME)
             self._messageLayer.purge()
 
-    def listen(self, timeout=10):
+    def listen(self, timeout:Optional[int]=10) -> None:
         """
         Listen for incoming messages. Timeout is used to check if the server must be switched off.
 
@@ -243,7 +247,7 @@ class CoAP(object):
                 logger.exception("Exception with Executor")
         self._socket.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Stop the server.
 
@@ -254,7 +258,7 @@ class CoAP(object):
             event.set()
         # self._socket.close()
 
-    def receive_datagram(self, args):
+    def receive_datagram(self, args:Tuple[bytes, defines.ServerT]) -> None:
         """
         Handle messages coming from the udp socket.
 
@@ -346,7 +350,7 @@ class CoAP(object):
         else:  # pragma: no cover
             logger.error("Received response from %s", message.source)
 
-    def send_datagram(self, message):
+    def send_datagram(self, message:Message) -> None:
         """
         Send a message through the udp socket.
 
@@ -357,11 +361,11 @@ class CoAP(object):
             host, port = message.destination
             logger.debug("send_datagram - " + str(message))
             serializer = Serializer()
-            message = serializer.serialize(message)
+            datagram = serializer.serialize(message)
 
-            self._socket.sendto(message, (host, port))
+            self._socket.sendto(datagram, (host, port))
 
-    def add_resource(self, path, resource):
+    def add_resource(self, path:str, resource:Resource) -> bool:
         """"
         Helper function to add resources to the resource directory during server initialization.
 
@@ -389,7 +393,7 @@ class CoAP(object):
                 self.root[actual_path] = resource
         return True
 
-    def _start_retrasmission(self, transaction, message):
+    def _start_retrasmission(self, transaction:Transaction, message:Message) -> None:
         """
         Start the retransmission task.
 
@@ -407,7 +411,7 @@ class CoAP(object):
                 self.to_be_stopped.append(transaction.retransmit_stop)
                 transaction.retransmit_thread.start()
 
-    def _retransmit(self, transaction, message, future_time, retransmit_count):
+    def _retransmit(self, transaction:Transaction, message:Message, future_time:int, retransmit_count:int) -> None:
         """
         Thread function to retransmit the message in the future
 
@@ -440,7 +444,7 @@ class CoAP(object):
             transaction.retransmit_stop = None
             transaction.retransmit_thread = None
 
-    def _start_separate_timer(self, transaction):
+    def _start_separate_timer(self, transaction:Transaction) -> threading.Timer:
         """
         Start a thread to handle separate mode.
 
@@ -453,7 +457,7 @@ class CoAP(object):
         return t
 
     @staticmethod
-    def _stop_separate_timer(timer):
+    def _stop_separate_timer(timer:threading.Timer) -> None:
         """
         Stop the separate Thread if an answer has been already provided to the client.
 
@@ -461,7 +465,7 @@ class CoAP(object):
         """
         timer.cancel()
 
-    def _send_ack(self, transaction):
+    def _send_ack(self, transaction:Transaction) -> None:
         """
         Sends an ACK message for the request.
 

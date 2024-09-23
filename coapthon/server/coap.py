@@ -1,9 +1,12 @@
+from __future__ import annotations
+from typing import Callable, Optional, cast, TYPE_CHECKING
+
 import logging
 import random
 import socket
 import struct
 import threading
-import collections
+
 
 from coapthon import defines
 from coapthon.layers.blocklayer import BlockLayer
@@ -18,6 +21,9 @@ from coapthon.resources.resource import Resource
 from coapthon.serializer import Serializer
 from coapthon.utils import Tree
 
+if TYPE_CHECKING:
+	from coapthon.transaction import Transaction
+
 
 __author__ = 'Giacomo Tanganelli'
 
@@ -29,7 +35,7 @@ class CoAP(object):
     """
     Implementation of the CoAP server
     """
-    def __init__(self, server_address, multicast=False, starting_mid=None, sock=None, cb_ignore_listen_exception=None):
+    def __init__(self, server_address:defines.ServerT, multicast:bool=False, starting_mid:int=None, sock:socket.socket=None, cb_ignore_listen_exception:Callable=None) -> None:
         """
         Initialize the server.
 
@@ -41,9 +47,9 @@ class CoAP(object):
         """
         self.stopped = threading.Event()
         self.stopped.clear()
-        self.to_be_stopped = []
-        self.purge = threading.Thread(target=self.purge)
-        self.purge.start()
+        self.to_be_stopped:list[threading.Event] = []
+        self.purgeThread = threading.Thread(target=self.purge)
+        self.purgeThread.start()
 
         self._messageLayer = MessageLayer(starting_mid)
         self._blockLayer = BlockLayer()
@@ -108,7 +114,7 @@ class CoAP(object):
 
             self._socket.bind(self.server_address)
 
-    def purge(self):
+    def purge(self) -> None:
         """
         Clean old transactions
 
@@ -117,7 +123,7 @@ class CoAP(object):
             self.stopped.wait(timeout=defines.EXCHANGE_LIFETIME)
             self._messageLayer.purge()
 
-    def listen(self, timeout=10):
+    def listen(self, timeout:int=10) -> None:
         """
         Listen for incoming messages. Timeout is used to check if the server must be switched off.
 
@@ -132,7 +138,7 @@ class CoAP(object):
             except socket.timeout:
                 continue
             except Exception as e:
-                if self._cb_ignore_listen_exception is not None and isinstance(self._cb_ignore_listen_exception, collections.Callable):
+                if self._cb_ignore_listen_exception is not None and callable(self._cb_ignore_listen_exception):
                     if self._cb_ignore_listen_exception(e, self):
                         continue
                 raise
@@ -180,7 +186,7 @@ class CoAP(object):
                 logger.exception("Exception with Executor")
         self._socket.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Stop the server.
 
@@ -190,7 +196,7 @@ class CoAP(object):
         for event in self.to_be_stopped:
             event.set()
 
-    def receive_request(self, transaction):
+    def receive_request(self, transaction:Transaction) -> None:
         """
         Handle requests coming from the udp socket.
 
@@ -232,7 +238,7 @@ class CoAP(object):
                     self._start_retransmission(transaction, transaction.response)
                 self.send_datagram(transaction.response)
 
-    def send_datagram(self, message):
+    def send_datagram(self, message:Message) -> None:
         """
         Send a message through the udp socket.
 
@@ -243,10 +249,10 @@ class CoAP(object):
             host, port = message.destination
             logger.debug("send_datagram - " + str(message))
             serializer = Serializer()
-            message = serializer.serialize(message)
-            self._socket.sendto(message, (host, port))
+            datagram = serializer.serialize(message)
+            self._socket.sendto(datagram, (host, port))
 
-    def add_resource(self, path, resource):
+    def add_resource(self, path:str, resource:Resource) -> bool:
         """
         Helper function to add resources to the resource directory during server initialization.
 
@@ -272,7 +278,7 @@ class CoAP(object):
                 self.root[actual_path] = resource
         return True
 
-    def remove_resource(self, path):
+    def remove_resource(self, path:str) -> Optional[Resource]:
         """
         Helper function to remove resources.
 
@@ -288,14 +294,14 @@ class CoAP(object):
             i += 1
             actual_path += "/" + p
         try:
-            res = self.root[actual_path]
+            res = cast(Resource, self.root[actual_path])
         except KeyError:
             res = None
         if res is not None:
             del(self.root[actual_path])
         return res
 
-    def _start_retransmission(self, transaction, message):
+    def _start_retransmission(self, transaction:Transaction, message:Message) -> None:
         """
         Start the retransmission task.
 
@@ -313,7 +319,7 @@ class CoAP(object):
                 self.to_be_stopped.append(transaction.retransmit_stop)
                 transaction.retransmit_thread.start()
 
-    def _retransmit(self, transaction, message, future_time, retransmit_count):
+    def _retransmit(self, transaction:Transaction, message:Message, future_time:float, retransmit_count:int) -> None:
         """
         Thread function to retransmit the message in the future
 
@@ -347,7 +353,7 @@ class CoAP(object):
             transaction.retransmit_stop = None
             transaction.retransmit_thread = None
 
-    def _start_separate_timer(self, transaction):
+    def _start_separate_timer(self, transaction:Transaction) -> threading.Timer:
         """
         Start a thread to handle separate mode.
 
@@ -360,7 +366,7 @@ class CoAP(object):
         return t
 
     @staticmethod
-    def _stop_separate_timer(timer):
+    def _stop_separate_timer(timer:threading.Timer) -> None:
         """
         Stop the separate Thread if an answer has been already provided to the client.
 
@@ -368,7 +374,7 @@ class CoAP(object):
         """
         timer.cancel()
 
-    def _send_ack(self, transaction):
+    def _send_ack(self, transaction:Transaction) -> None:
         """
         Sends an ACK message for the request.
 
@@ -383,7 +389,7 @@ class CoAP(object):
                 if ack.type is not None and ack.mid is not None:
                     self.send_datagram(ack)
 
-    def notify(self, resource):
+    def notify(self, resource:Resource) -> None:
         """
         Notifies the observers of a certain resource.
 

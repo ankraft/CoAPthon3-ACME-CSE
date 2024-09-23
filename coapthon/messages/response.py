@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from coapthon import defines
 from coapthon.messages.message import Message
 from coapthon.messages.option import Option
@@ -10,7 +12,7 @@ class Response(Message):
     Class to handle the Responses.
     """
     @property
-    def location_path(self):
+    def location_path(self) -> str:
         """
         Return the Location-Path of the response.
 
@@ -24,7 +26,7 @@ class Response(Message):
         return "/".join(value)
 
     @location_path.setter
-    def location_path(self, path):
+    def location_path(self, path:str) -> None:
         """
         Set the Location-Path of the response.
 
@@ -45,28 +47,30 @@ class Response(Message):
         #     self.location_query = query
 
     @location_path.deleter
-    def location_path(self):
+    def location_path(self) -> None:
         """
         Delete the Location-Path of the response.
         """
         self.del_option_by_number(defines.OptionRegistry.LOCATION_PATH.number)
 
     @property
-    def location_query(self):
+    def location_query(self) -> list[str]:
         """
         Return the Location-Query of the response.
 
         :rtype : String
         :return: the Location-Query option
         """
-        value = []
+        value:list[str] = []
         for option in self.options:
             if option.number == defines.OptionRegistry.LOCATION_QUERY.number:
+                if not isinstance(option.value, str):
+                    raise ValueError("Location-Query must be a string")
                 value.append(option.value)
         return value
 
     @location_query.setter
-    def location_query(self, value):
+    def location_query(self, value:str) -> None:
         """
         Set the Location-Query of the response.
 
@@ -82,14 +86,14 @@ class Response(Message):
             self.add_option(option)
 
     @location_query.deleter
-    def location_query(self):
+    def location_query(self) -> None:
         """
         Delete the Location-Query of the response.
         """
         self.del_option_by_number(defines.OptionRegistry.LOCATION_QUERY.number)
 
     @property
-    def max_age(self):
+    def max_age(self) -> int:
         """
         Return the MaxAge of the response.
 
@@ -103,7 +107,7 @@ class Response(Message):
         return value
 
     @max_age.setter
-    def max_age(self, value):
+    def max_age(self, value:int) -> None:
         """
         Set the MaxAge of the response.
 
@@ -117,7 +121,7 @@ class Response(Message):
         self.add_option(option)
 
     @max_age.deleter
-    def max_age(self):
+    def max_age(self) -> None:
         """
         Delete the MaxAge of the response.
         """

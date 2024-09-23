@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+from typing import Optional
+
 import getopt
 import sys
 from coapthon.forward_proxy.coap import CoAP
@@ -8,17 +11,16 @@ __author__ = 'Giacomo Tanganelli'
 
 
 class CoAPForwardProxy(CoAP):
-    def __init__(self, host, port,  multicast=False, cache=False):
+    def __init__(self, host:str, port:int, multicast:Optional[bool]=False, cache:Optional[bool]=False) -> None:
         CoAP.__init__(self, (host, port), multicast=multicast, cache=cache)
-
         print("CoAP Proxy start on " + host + ":" + str(port))
 
 
-def usage():  # pragma: no cover
+def usage() -> None:  # pragma: no cover
     print("coapforwardproxy.py -i <ip address> -p <port>")
 
 
-def main(argv):  # pragma: no cover
+def main(argv:list[str]) -> None:  # pragma: no cover
     ip = "0.0.0.0"
     port = 5684
     try:

@@ -1,28 +1,33 @@
 #!/usr/bin/env python
+from __future__ import annotations
+from typing import Optional
+
+
 import getopt
 import json
 import socket
 import sys
 
 from coapthon.client.helperclient import HelperClient
+from coapthon.messages.response import Response
 from coapthon.utils import parse_uri
 
 __author__ = 'Giacomo Tanganelli'
 
-client = None
+client:Optional[HelperClient] = None
 
 
-def usage():  # pragma: no cover
+def usage() -> None:  # pragma: no cover
     print("Command:\tcollectclient.py -c ")
     print("Options:")
     print("\t-c, --config=\t\tConfig file")
 
 
-def client_callback(response):
+def client_callback(response:Response) -> None:  
     print("Callback")
 
 
-def client_callback_observe(response):  # pragma: no cover
+def client_callback_observe(response:Response) -> None:  # pragma: no cover
     global client
     print("Callback_observe")
     print((response.pretty_print()))
@@ -48,7 +53,7 @@ def client_callback_observe(response):  # pragma: no cover
             break
 
 
-def main():  # pragma: no cover
+def main() -> None:  # pragma: no cover
     global client
     config = None
     try:
@@ -73,9 +78,9 @@ def main():  # pragma: no cover
         usage()
         sys.exit(2)
 
-    config = open(config, "r")
-    config = json.load(config)
-    for n in config["nodes"]:
+    config_f = open(config, "r")
+    configuration = json.load(config_f)
+    for n in configuration["nodes"]:
         path = "coap://"+n["ip"]+":"+str(n["port"])+"/radio"
         host, port, path = parse_uri(path)
         try:

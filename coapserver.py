@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+from typing import Optional
+
 import getopt
 import sys
 from coapthon.server.coap import CoAP
@@ -11,7 +14,7 @@ __author__ = 'Giacomo Tanganelli'
 
 
 class CoAPServer(CoAP):
-    def __init__(self, host, port, multicast=False):
+    def __init__(self, host:str, port:int, multicast:Optional[bool]=False) -> None:
         CoAP.__init__(self, (host, port), multicast)
         self.add_resource('basic/', BasicResource())
         self.add_resource('storage/', Storage())
@@ -30,11 +33,11 @@ class CoAPServer(CoAP):
         print(self.root.dump())
 
 
-def usage():  # pragma: no cover
+def usage() -> None:  # pragma: no cover
     print("coapserver.py -i <ip address> -p <port>")
 
 
-def main(argv):  # pragma: no cover
+def main(argv:list[str]) -> None:  # pragma: no cover
     ip = "0.0.0.0"
     port = 5683
     multicast = False

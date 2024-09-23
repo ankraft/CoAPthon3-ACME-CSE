@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     while(1):
         loop_time = time()
-        msg = ''    #[0x40, 0x00, 0x00, 0x00]
+        msg = b''    #[0x40, 0x00, 0x00, 0x00]
 
         msg += struct.pack("B", 0x40)
         msg += struct.pack("B", 0x00)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         msg += struct.pack("B", ping_no)
 
         try :
-            print('[0x%08X] Send ping:' % (ping_cnt), [hex(ord(c)) for c in msg])
+            # print('[0x%08X] Send ping:' % (ping_cnt), [hex(ord(c)) for c in msg])
             # Set the whole string
             s.sendto(msg, (host, port))
             s.settimeout(2 + sleep_sec)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
             # We need to check if ping peyload counter is the same in reply
             status = bytes(msg)[3] == bytes(reply)[3]
-            print('[0x%08X] Recv ping:' % (ping_cnt), [hex(ord(c)) for c in reply], 'ok' if status else 'fail')
+            # print('[0x%08X] Recv ping:' % (ping_cnt), [hex(ord(c)) for c in reply], 'ok' if status else 'fail')
 
         except socket.error as e:
             print('Error: socket.error: ', str(e))
