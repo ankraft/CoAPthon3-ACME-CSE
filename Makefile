@@ -19,7 +19,7 @@ build:
 publish: clean build
 	twine upload `ls -t ${DISTDIR}/*.whl | head -1`
 
-local-install:
+local-install: clean build
 	cd ${DISTDIR} && python -m pip install --force-reinstall `ls -1 | grep .whl | head -1`
 
 local-uninstall:

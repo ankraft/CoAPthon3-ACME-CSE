@@ -184,6 +184,12 @@ class CoAP(object):
 
             except RuntimeError:
                 logger.exception("Exception with Executor")
+            except Exception as e:
+                if self._cb_ignore_listen_exception is not None and callable(self._cb_ignore_listen_exception):
+                    if self._cb_ignore_listen_exception(e, self):
+                        continue
+                raise
+
         self._socket.close()
 
     def close(self) -> None:
